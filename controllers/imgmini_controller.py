@@ -1,14 +1,14 @@
 import os
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-class ImageController:
+class ImgMiniController:
 
     @staticmethod
     def aplicar_perspectiva_bloque(img_bloque, inclinacion=130):
         ancho, alto = img_bloque.size
         puntos_control = [(inclinacion, 0), (ancho - inclinacion, 0), (ancho, alto), (0, alto)]
         puntos_origen = [(0, 0), (ancho, 0), (ancho, alto), (0, alto)]
-        matrix = ImageController._find_coefficients(puntos_control, puntos_origen)
+        matrix = ImgMiniController._find_coefficients(puntos_control, puntos_origen)
         return img_bloque.transform((ancho, alto), Image.Transform.PERSPECTIVE, matrix, resample=Image.Resampling.BILINEAR)
 
     @staticmethod
@@ -125,22 +125,36 @@ class ImageController:
         except IOError:
             fuente_grande = fuente_skins = fuente_lados = fuente_ticket = ImageFont.load_default()
 
-        ImageController.dibujar_texto_estilo_meta(
+        ImgMiniController.dibujar_texto_estilo_meta(
             fondo, (1920, 344), "¡CUENTA DISPONIBLE!", fuente_grande,
             blur_radius=35, shadow_offset=(18, 18), stroke_width=0, opacity=255, shadow_opacity=170
         )
 
         bloque_paso = Image.new("RGBA", (ancho_bloque, alto_bloque), (0, 0, 0, 0))
 
-        picos_raw  = ImageController.limpiar_imagen_checker(img_picos).resize((1060, 1070))
-        skins_raw  = ImageController.limpiar_imagen_checker(img_skins).resize((1300, 1320))
-        emotes_raw = ImageController.limpiar_imagen_checker(img_emotes).resize((1060, 1070))
+        # 1. Limpiamos las imágenes primero
+        picos_limpia  = ImgMiniController.limpiar_imagen_checker(img_picos)
+        skins_limpia  = ImgMiniController.limpiar_imagen_checker(img_skins)
+        emotes_limpia = ImgMiniController.limpiar_imagen_checker(img_emotes)
 
-        bloque_paso.paste(skins_raw, (1310, 80), skins_raw)
+        # 2. Picos y Emotes se quedan con su tamaño normal
+        picos_raw  = picos_limpia.resize((1060, 1070), Image.Resampling.LANCZOS)
+        emotes_raw = emotes_limpia.resize((1060, 1070), Image.Resampling.LANCZOS)
+        
+        # 3. 🔥 MAGIA PARA SKINS PEQUEÑAS 🔥
+        ancho_fijo = 1300
+        # Calculamos la proporción para que el alto se ajuste solito sin estirarse
+        proporcion = ancho_fijo / skins_limpia.width
+        alto_proporcional = int(skins_limpia.height * proporcion)
+        
+        skins_raw = skins_limpia.resize((ancho_fijo, alto_proporcional), Image.Resampling.LANCZOS)
+
+        # 4. Pegamos todas a la misma altura (Y = 350) para que se alineen por arriba
+        bloque_paso.paste(skins_raw, (1310, 350), skins_raw)
         bloque_paso.paste(picos_raw, (170, 350), picos_raw)
         bloque_paso.paste(emotes_raw, (2690, 350), emotes_raw)
 
-        bloque_deformado = ImageController.aplicar_perspectiva_bloque(bloque_paso, inclinacion=130)
+        bloque_deformado = ImgMiniController.aplicar_perspectiva_bloque(bloque_paso, inclinacion=130)
 
         mascara_bloque = bloque_deformado.split()[3]
         sombra_canvas = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -152,12 +166,12 @@ class ImageController:
 
         capa_textos_3d = Image.new("RGBA", (ancho_bloque, alto_bloque), (0, 0, 0, 0))
 
-        ImageController.dibujar_texto_estilo_meta(capa_textos_3d, (620, 1600), txt_picos, fuente_lados, blur_radius=16, shadow_offset=(12, 12), opacity=245)
-        ImageController.dibujar_texto_estilo_meta(capa_textos_3d, (1960, 1555), txt_skins, fuente_skins, blur_radius=16, shadow_offset=(12, 12), opacity=245)
-        ImageController.dibujar_texto_estilo_meta(capa_textos_3d, (3300, 1600), txt_emotes, fuente_lados, blur_radius=16, shadow_offset=(12, 12), opacity=245)
-        ImageController.dibujar_texto_estilo_meta(capa_textos_3d, (1960, 1750), "PUEDES ABRIR TICKET PARA COMPRAR O RESOLVER DUDAS.", fuente_ticket, blur_radius=12, shadow_offset=(1, 1))
+        ImgMiniController.dibujar_texto_estilo_meta(capa_textos_3d, (620, 1600), txt_picos, fuente_lados, blur_radius=16, shadow_offset=(12, 12), opacity=245)
+        ImgMiniController.dibujar_texto_estilo_meta(capa_textos_3d, (1960, 1555), txt_skins, fuente_skins, blur_radius=16, shadow_offset=(12, 12), opacity=245)
+        ImgMiniController.dibujar_texto_estilo_meta(capa_textos_3d, (3300, 1600), txt_emotes, fuente_lados, blur_radius=16, shadow_offset=(12, 12), opacity=245)
+        ImgMiniController.dibujar_texto_estilo_meta(capa_textos_3d, (1960, 1750), "PUEDES ABRIR TICKET PARA COMPRAR O LIL SHOP.", fuente_ticket, blur_radius=12, shadow_offset=(1, 1))
 
-        textos_deformados = ImageController.aplicar_perspectiva_bloque(capa_textos_3d, inclinacion=150)
+        textos_deformados = ImgMiniController.aplicar_perspectiva_bloque(capa_textos_3d, inclinacion=150)
         fondo.paste(textos_deformados, POS_BLOQUE, textos_deformados)
 
         resultado = fondo.convert("RGB")

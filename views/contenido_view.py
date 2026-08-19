@@ -66,16 +66,36 @@ class ContenidoView(ft.Container):
                         bloqueado=False
                     ),
                     
-                    # Tarjeta 2: Imagen Recibos (¡DESBLOQUEADA!)
+                    # Tarjeta 2: Imagen Recibos 
                     self._crear_bloque_atajo(
                         texto="Imagen Recibos",
                         descripcion="Genera tickets de compra", 
-                        icono=ft.Icons.RECEIPT_LONG, # Icono actualizado
-                        color_icono=ft.Colors.BLUE_300, # Color actualizado
-                        ruta="recibo", # Ruta asignada
-                        bloqueado=False # Desbloqueado
+                        icono=ft.Icons.RECEIPT_LONG, 
+                        color_icono=ft.Colors.BLUE_300, 
+                        ruta="recibo", 
+                        bloqueado=False 
                     ),
-                ], alignment=ft.MainAxisAlignment.START, spacing=20)
+
+                    # 🔥 Tarjeta 3: Cuenta Pequeña (NUEVO) 🔥
+                    self._crear_bloque_atajo(
+                        texto="Cuenta Pequeña",
+                        descripcion="Genera imágenes de cuenta en formato reducido", 
+                        icono=ft.Icons.IMAGE_ASPECT_RATIO, 
+                        color_icono=ft.Colors.PURPLE_200, 
+                        ruta="cuenta_pequena", 
+                        bloqueado=False 
+                    ),
+
+                    # 🔥 Tarjeta 4: Recibo Pequeño (NUEVO) 🔥
+                    self._crear_bloque_atajo(
+                        texto="Recibo Pequeño",
+                        descripcion="Genera tickets de compra en formato reducido", 
+                        icono=ft.Icons.RECEIPT, 
+                        color_icono=ft.Colors.BLUE_200, 
+                        ruta="recibo_pequeno", 
+                        bloqueado=False 
+                    ),
+                ], alignment=ft.MainAxisAlignment.START, spacing=20, wrap=True) # 🔥 Añadimos wrap=True para que bajen de línea si no caben
             ])
         )
 

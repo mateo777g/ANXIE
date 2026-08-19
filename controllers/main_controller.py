@@ -4,8 +4,12 @@ from views.image1_view import Image1View
 from views.contenido_view import ContenidoView
 from views.ajustes_view import AjustesView
 from views.biblioteca_view import BibliotecaView
-from views.login_view import LoginView # <-- IMPORTAMOS LA VISTA DE LOGIN
-from views.recibo_view import ReciboView # <-- IMPORTAMOS LA NUEVA VISTA DE RECIBO
+from views.login_view import LoginView
+from views.recibo_view import ReciboView
+
+# 🔥 IMPORTAMOS TUS NUEVOS ARCHIVOS RÉPLICA AQUÍ 🔥
+from views.imgmini_view import CuentaPequenaView 
+from views.recibomini_view import ReciboPequenoView
 
 class MainController:
     def __init__(self, page: ft.Page):
@@ -17,16 +21,11 @@ class MainController:
         self.content_container = ft.Container(expand=True)
         self.page.add(self.content_container)
         
-        # <-- CAMBIO IMPORTANTE: Ahora arrancamos en la vista de LOGIN en lugar de 'home'
         self.cambiar_vista("home") 
 
     def cambiar_vista(self, vista: str):
         self.content_container.content = None
         
-        # <-- AGREGAMOS LA CONDICIÓN DEL LOGIN
-        #if vista == "login":
-        #    vista_actual = LoginView(self)
-            
         if vista == "home":
             vista_actual = HomeView(self)
             
@@ -42,11 +41,17 @@ class MainController:
         elif vista == "biblioteca":
             vista_actual = BibliotecaView(self)
             
-        elif vista == "recibo": # <-- AGREGAMOS LA NUEVA RUTA AQUÍ
+        elif vista == "recibo": 
             vista_actual = ReciboView(self)
+
+        # 🔥 AGREGAMOS TUS DOS NUEVAS RUTAS AQUÍ 🔥
+        elif vista == "cuenta_pequena":
+            vista_actual = CuentaPequenaView(self)
+
+        elif vista == "recibo_pequeno":
+            vista_actual = ReciboPequenoView(self)
             
         else:
-            # Fallback por si acaso
             vista_actual = HomeView(self)
             
         self.content_container.content = vista_actual

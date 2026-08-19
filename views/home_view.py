@@ -78,8 +78,8 @@ class HomeView(ft.Container):
                             ft.Text("Atajos a las tareas que mas usas.", color=ft.Colors.RED_400, size=12),
                             ft.Container(height=15), 
                             
+                            # PRIMERA FILA DE BOTONES (Los Originales)
                             ft.Row([
-                                # Botón: Imagen Cuentas
                                 ft.Container(
                                     content=ft.Row([
                                         ft.Icon(ft.Icons.IMAGE, color=ft.Colors.PURPLE_300, size=20),
@@ -88,7 +88,6 @@ class HomeView(ft.Container):
                                     bgcolor="#333333", height=48, border_radius=10, expand=True, ink=True,
                                     on_click=lambda _: self.router.cambiar_vista("generador_miniaturas")
                                 ),
-                                # Botón: Imagen Recibos
                                 ft.Container(
                                     content=ft.Row([
                                         ft.Icon(ft.Icons.RECEIPT_LONG, color=ft.Colors.BLUE_300, size=20),
@@ -97,7 +96,28 @@ class HomeView(ft.Container):
                                     bgcolor="#333333", height=48, border_radius=10, expand=True, ink=True,
                                     on_click=lambda _: self.router.cambiar_vista("recibo") 
                                 )
+                            ], spacing=12),
+
+                            # 🔥 SEGUNDA FILA DE BOTONES (Los Nuevos Pequeños) 🔥
+                            ft.Row([
+                                ft.Container(
+                                    content=ft.Row([
+                                        ft.Icon(ft.Icons.IMAGE_ASPECT_RATIO, color=ft.Colors.PURPLE_200, size=20),
+                                        ft.Text("Cuenta Pequeña", color=ft.Colors.WHITE, weight="w600", size=13)
+                                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                                    bgcolor="#333333", height=48, border_radius=10, expand=True, ink=True,
+                                    on_click=lambda _: self.router.cambiar_vista("cuenta_pequena")
+                                ),
+                                ft.Container(
+                                    content=ft.Row([
+                                        ft.Icon(ft.Icons.RECEIPT, color=ft.Colors.BLUE_200, size=20),
+                                        ft.Text("Recibo Pequeño", color=ft.Colors.WHITE, weight="w600", size=13)
+                                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                                    bgcolor="#333333", height=48, border_radius=10, expand=True, ink=True,
+                                    on_click=lambda _: self.router.cambiar_vista("recibo_pequeno")
+                                )
                             ], spacing=12)
+
                         ], alignment=ft.MainAxisAlignment.CENTER) 
                     ),
                     
@@ -130,7 +150,7 @@ class HomeView(ft.Container):
                         ], alignment=ft.MainAxisAlignment.CENTER)
                     )
                 ], 
-                height=190, 
+                height=250, 
                 vertical_alignment=ft.CrossAxisAlignment.STRETCH
                 )
             ])

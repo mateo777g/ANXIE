@@ -4,9 +4,11 @@ import time
 import json
 from controllers.image_controller import ImageController
 from controllers.recibo_controller import ReciboController
+from controllers.imgmini_controller import ImgMiniController
+# 🔥 IMPORTAMOS EL NUEVO CONTROLADOR PARA RECIBOS MINI
+from controllers.recibomini_controller import ReciboMiniController 
 
 class AppController:
-    # Agregamos 'tipo' para saber quién nos llama ("cuentas" o "recibos")
     def __init__(self, view, tipo="cuenta"):
         self.view = view
         self.tipo = tipo 
@@ -16,9 +18,15 @@ class AppController:
         try:
             self.view.mostrar_snack("Procesando imagen... esto puede tomar un momento.")
             
-            # --- CARPETAS DINÁMICAS ---
-            # Si es cuenta va a 'biblioteca/cuentas', si es recibo va a 'biblioteca/recibos'
-            carpeta_biblio = os.path.join("biblioteca", self.tipo)
+            # --- TRUCO PARA LA BIBLIOTECA (AMPLIADO) ---
+            if self.tipo == "cuentas_mini":
+                carpeta_destino = "cuentas"
+            elif self.tipo == "recibos_mini":
+                carpeta_destino = "recibos"
+            else:
+                carpeta_destino = self.tipo
+                
+            carpeta_biblio = os.path.join("biblioteca", carpeta_destino)
             os.makedirs(carpeta_biblio, exist_ok=True)
             
             timestamp = int(time.time())
@@ -27,41 +35,59 @@ class AppController:
             
             # --- DECIDIR QUÉ MOTOR USAR ---
             if self.tipo == "cuentas":
-                # Lógica de Cuentas (los 3 bloques)
                 picos_path = self.view.input_picos.value
                 skins_path = self.view.input_skins.value
                 emotes_path = self.view.input_emotes.value
-                
                 if not all([picos_path, skins_path, emotes_path]):
                     self.view.mostrar_snack("Por favor, llena las rutas de las 3 imágenes.")
                     return
-                
                 ImageController.generar_miniatura(
                     picos_path, skins_path, emotes_path, 
                     self.view.txt_picos.value, self.view.txt_skins.value, self.view.txt_emotes.value, 
                     self.ruta_cache_temporal
                 )
                 
-            elif self.tipo == "recibos":
-                # Lógica de Recibos
-                skin_path = self.view.input_skin.value
+            elif self.tipo == "cuentas_mini":
+                picos_path = self.view.input_picos.value
+                skins_path = self.view.input_skins.value
+                emotes_path = self.view.input_emotes.value
+                if not all([picos_path, skins_path, emotes_path]):
+                    self.view.mostrar_snack("Por favor, llena las rutas de las 3 imágenes.")
+                    return
+                ImgMiniController.generar_miniatura(
+                    picos_path, skins_path, emotes_path, 
+                    self.view.txt_picos.value, self.view.txt_skins.value, self.view.txt_emotes.value, 
+                    self.ruta_cache_temporal
+                )
                 
+            elif self.tipo == "recibos":
+                skin_path = self.view.input_skin.value
                 if not skin_path:
                     self.view.mostrar_snack("Brou, te falta elegir la imagen del locker.")
                     return
-                
-                # --- UNIMOS NFA / FA CON EL USUARIO ---
                 tipo_cuenta = getattr(self.view, "radio_tipo_cuenta", None)
                 val_tipo = tipo_cuenta.value if (tipo_cuenta and tipo_cuenta.value) else "NFA"
                 usuario_completo = f"{val_tipo} - {self.view.txt_usuario.value}"
 
                 ReciboController.generar_recibo(
-                    skin_path, 
-                    self.view.txt_correo1.value, 
-                    self.view.txt_correo2.value, 
-                    usuario_completo, 
-                    self.view.txt_fecha.value, 
-                    self.ruta_cache_temporal
+                    skin_path, self.view.txt_correo1.value, self.view.txt_correo2.value, 
+                    usuario_completo, self.view.txt_fecha.value, self.ruta_cache_temporal
+                )
+
+            elif self.tipo == "recibos_mini":
+                # 🔥 LÓGICA DE RECIBOS MINIS 🔥
+                skin_path = self.view.input_skin.value
+                if not skin_path:
+                    self.view.mostrar_snack("Brou, te falta elegir la imagen del locker mini.")
+                    return
+                tipo_cuenta = getattr(self.view, "radio_tipo_cuenta", None)
+                val_tipo = tipo_cuenta.value if (tipo_cuenta and tipo_cuenta.value) else "NFA"
+                usuario_completo = f"{val_tipo} - {self.view.txt_usuario.value}"
+
+                # Usa el controlador de recibos mini
+                ReciboMiniController.generar_recibo(
+                    skin_path, self.view.txt_correo1.value, self.view.txt_correo2.value, 
+                    usuario_completo, self.view.txt_fecha.value, self.ruta_cache_temporal
                 )
             
             if os.path.exists(self.ruta_cache_temporal):
@@ -88,18 +114,24 @@ class AppController:
         try:
             es_en_la_nube = os.environ.get("RENDER") is not None or os.environ.get("PORT") is not None
 
+            # --- TRUCO AMPLIADO PARA CONFIGURACIONES ---
+            if self.tipo == "cuentas_mini":
+                tipo_config = "cuentas"
+            elif self.tipo == "recibos_mini":
+                tipo_config = "recibos"
+            else:
+                tipo_config = self.tipo
+
             if es_en_la_nube:
-                # Descarga web desde la subcarpeta correspondiente
-                ruta_en_assets = os.path.join("biblioteca", self.tipo, nombre_archivo_final)
+                ruta_en_assets = os.path.join("biblioteca", tipo_config, nombre_archivo_final)
                 shutil.copy(self.ruta_cache_temporal, ruta_en_assets)
-                self.view.page_ref.launch_url(f"/{self.tipo}/{nombre_archivo_final}")
+                self.view.page_ref.launch_url(f"/{tipo_config}/{nombre_archivo_final}")
                 self.view.mostrar_snack("¡Descarga iniciada en tu navegador, bro!")
                 
             else:
                 ruta_guardada = None
                 archivo_config = "config.json"
-                # Busca 'ruta_descargas_cuentas' o 'ruta_descargas_recibos' dependiendo del tipo
-                clave_json = f"ruta_descargas_{self.tipo}" 
+                clave_json = f"ruta_descargas_{tipo_config}" 
                 
                 if os.path.exists(archivo_config):
                     try:
