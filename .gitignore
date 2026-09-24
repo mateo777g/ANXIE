@@ -2,3 +2,16 @@
 venv/
 __pycache__/
 config.json
+
+# Lo que generan los generadores: los recibos llevan el correo y la contraseña de
+# cuentas vendidas. Nunca a git (el repo es público).
+biblioteca/
+
+# Lo que genera "flet pack" al hacer el .exe: se rehace en cada build.
+build/
+dist/
+*.spec
+*.ico
+
+# Documentación interna del diseño (con citas del dueño): se queda solo en la PC.
+DISENO.md

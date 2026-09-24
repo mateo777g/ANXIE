@@ -1,6 +1,9 @@
 import flet as ft
-import datetime
 import os
+
+from views.barra_lateral import crear_barra_lateral
+from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
+                          tarjeta_iphone, boton_atajo, etiqueta)
 
 class HomeView(ft.Container):
     def __init__(self, router):
@@ -9,41 +12,16 @@ class HomeView(ft.Container):
         self.page_ref = router.page
         self.expand = True
         self.bgcolor = "#0e0e0e"
+        self.gradient = fondo_pagina()
         self.padding = 0
-        
-        # --- LÓGICA PARA LA FECHA DINÁMICA ---
-        dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]
-        meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
-        hoy = datetime.datetime.now()
-        fecha_texto = f"{dias[hoy.weekday()]}, {hoy.day} DE {meses[hoy.month - 1]}"
 
-        # --- TEXTOS DE LOS CONTADORES ---
-        self.texto_cuentas = ft.Text("0 cuentas creadas", color=ft.Colors.WHITE, size=14, weight="w500")
-        self.texto_recibos = ft.Text("0 recibos creados", color=ft.Colors.WHITE, size=14, weight="w500")
+        # --- CONTADORES ---
+        # Cada uno con el icono de su botón de atajo, para que se sepa cuál es cuál.
+        contador_cuentas, self.numero_cuentas, self.etiqueta_cuentas = self._crear_contador(ft.Icons.IMAGE)
+        contador_recibos, self.numero_recibos, self.etiqueta_recibos = self._crear_contador(ft.Icons.RECEIPT_LONG)
 
         # --- BARRA LATERAL (SIDEBAR) ---
-        sidebar = ft.Container(
-            width=250,
-            bgcolor="#1a1a1a",
-            padding=20,
-            content=ft.Column([
-                # Logo y Título
-                ft.Row([
-                    ft.CircleAvatar(radius=25, background_image_src="assets/logo.jpg", bgcolor=ft.Colors.WHITE),
-                    ft.Column([
-                        ft.Text("ANXIE STORE", weight="bold", italic=True, size=18),
-                        ft.Text("PANEL", color=ft.Colors.RED_700, size=10, weight="bold")
-                    ], spacing=0)
-                ]),
-                ft.Divider(height=40, color=ft.Colors.WHITE24),
-                
-                # Menú de navegación
-                self._crear_boton_menu("Inicio", ft.Icons.HOME, "home", activo=True),
-                self._crear_boton_menu("Crear contenido", ft.Icons.AUTO_AWESOME_OUTLINED, "contenido"),
-                self._crear_boton_menu("Mi biblioteca", ft.Icons.INBOX, "biblioteca"),
-                self._crear_boton_menu("Ajustes", ft.Icons.SETTINGS, "ajustes"),
-            ], spacing=10)
-        )
+        sidebar = crear_barra_lateral(self.router, "home")
 
         # --- CONTENIDO PRINCIPAL ---
         main_content = ft.Container(
@@ -51,104 +29,45 @@ class HomeView(ft.Container):
             padding=40,
             content=ft.Column([
                 # Fecha
-                ft.Text(fecha_texto, color=ft.Colors.RED_300, size=14, weight="w500"),
+                fecha_vista(),
                 
                 # Saludo
-                ft.Row([
-                    ft.Text("Buenos días,", size=40, weight="w500"),
-                    ft.Text("Miguel", size=40, color=ft.Colors.RED_700, weight="w500")
-                ], spacing=10),
+                ft.Row([titulo_vista("Buenos días,"), titulo_vista("Miguel")], spacing=10),
                 
                 ft.Container(height=25), # Más separación del saludo para que respire
                 
                 # --- FILA DE TARJETAS ---
+                # Las dos tarjetas empiezan arriba (sin centrar) y con la misma cabecera, así
+                # títulos, subtítulos y contenido quedan a la misma altura en las dos. Centrado,
+                # la tarjeta con menos contenido bajaba su título.
                 ft.Row([
                     # Bloque 1: ¿Qué hacemos hoy?
-                    ft.Container(
-                        expand=1,
-                        bgcolor="#1a1a1a",
-                        border_radius=15,
-                        padding=25,
-                        border=ft.Border(
-                            top=ft.BorderSide(1, ft.Colors.WHITE12), bottom=ft.BorderSide(1, ft.Colors.WHITE12),
-                            left=ft.BorderSide(1, ft.Colors.WHITE12), right=ft.BorderSide(1, ft.Colors.WHITE12)
-                        ),
-                        content=ft.Column([
-                            ft.Text("¿Qué hacemos hoy?", size=22, weight="bold", italic=True),
-                            ft.Text("Atajos a las tareas que mas usas.", color=ft.Colors.RED_400, size=12),
-                            ft.Container(height=15), 
-                            
+                    tarjeta_iphone(ft.Column([
+                            *cabecera_tarjeta("¿QUÉ HACEMOS HOY?", "Atajos a las tareas que más usas."),
+
                             # PRIMERA FILA DE BOTONES (Los Originales)
                             ft.Row([
-                                ft.Container(
-                                    content=ft.Row([
-                                        ft.Icon(ft.Icons.IMAGE, color=ft.Colors.PURPLE_300, size=20),
-                                        ft.Text("Imagen Cuentas", color=ft.Colors.WHITE, weight="w600", size=13)
-                                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
-                                    bgcolor="#333333", height=48, border_radius=10, expand=True, ink=True,
-                                    on_click=lambda _: self.router.cambiar_vista("generador_miniaturas")
-                                ),
-                                ft.Container(
-                                    content=ft.Row([
-                                        ft.Icon(ft.Icons.RECEIPT_LONG, color=ft.Colors.BLUE_300, size=20),
-                                        ft.Text("Imagen Recibos", color=ft.Colors.WHITE, weight="w600", size=13)
-                                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
-                                    bgcolor="#333333", height=48, border_radius=10, expand=True, ink=True,
-                                    on_click=lambda _: self.router.cambiar_vista("recibo") 
-                                )
+                                self._atajo(ft.Icons.IMAGE, "Imagen Cuentas", "generador_miniaturas"),
+                                self._atajo(ft.Icons.RECEIPT_LONG, "Imagen Recibos", "recibo")
                             ], spacing=12),
 
                             # 🔥 SEGUNDA FILA DE BOTONES (Los Nuevos Pequeños) 🔥
                             ft.Row([
-                                ft.Container(
-                                    content=ft.Row([
-                                        ft.Icon(ft.Icons.IMAGE_ASPECT_RATIO, color=ft.Colors.PURPLE_200, size=20),
-                                        ft.Text("Cuenta Pequeña", color=ft.Colors.WHITE, weight="w600", size=13)
-                                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
-                                    bgcolor="#333333", height=48, border_radius=10, expand=True, ink=True,
-                                    on_click=lambda _: self.router.cambiar_vista("cuenta_pequena")
-                                ),
-                                ft.Container(
-                                    content=ft.Row([
-                                        ft.Icon(ft.Icons.RECEIPT, color=ft.Colors.BLUE_200, size=20),
-                                        ft.Text("Recibo Pequeño", color=ft.Colors.WHITE, weight="w600", size=13)
-                                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
-                                    bgcolor="#333333", height=48, border_radius=10, expand=True, ink=True,
-                                    on_click=lambda _: self.router.cambiar_vista("recibo_pequeno")
-                                )
+                                self._atajo(ft.Icons.IMAGE_ASPECT_RATIO, "Cuenta Pequeña", "cuenta_pequena"),
+                                self._atajo(ft.Icons.RECEIPT, "Recibo Pequeño", "recibo_pequeno")
                             ], spacing=12)
 
-                        ], alignment=ft.MainAxisAlignment.CENTER) 
-                    ),
-                    
+                        ])),
+
                     # Bloque 2: Contenido Generado (Vuelve a ser UN SOLO BLOQUE)
-                    ft.Container(
-                        expand=1,
-                        bgcolor="#1a1a1a",
-                        border_radius=15,
-                        padding=25,
-                        border=ft.Border(
-                            top=ft.BorderSide(1, ft.Colors.WHITE12), bottom=ft.BorderSide(1, ft.Colors.WHITE12),
-                            left=ft.BorderSide(1, ft.Colors.WHITE12), right=ft.BorderSide(1, ft.Colors.WHITE12)
-                        ),
-                        content=ft.Column([
-                            ft.Text("CONTENIDO GENERADO", size=16, weight="bold", color=ft.Colors.WHITE),
-                            ft.Text("Estadísticas de tus cuentas actuales.", color=ft.Colors.WHITE54, size=12),
-                            ft.Container(height=15),
-                            
-                            # Contadores estéticos alineados
-                            ft.Row([
-                                ft.Icon(ft.Icons.IMAGE, color=ft.Colors.WHITE54, size=20),
-                                self.texto_cuentas
-                            ], spacing=10),
-                            
-                            ft.Row([
-                                ft.Icon(ft.Icons.RECEIPT_LONG, color=ft.Colors.WHITE54, size=20),
-                                self.texto_recibos
-                            ], spacing=10)
-                            
-                        ], alignment=ft.MainAxisAlignment.CENTER)
-                    )
+                    tarjeta_iphone(ft.Column([
+                            *cabecera_tarjeta("CONTENIDO GENERADO", "Estadísticas de tus cuentas actuales."),
+
+                            # Los dos contadores en dos columnas, como los botones de al lado
+                            # (misma separación): el segundo empieza donde "Imagen Recibos".
+                            ft.Row([contador_cuentas, contador_recibos], spacing=12)
+
+                        ]))
                 ], 
                 height=250, 
                 vertical_alignment=ft.CrossAxisAlignment.STRETCH
@@ -177,19 +96,38 @@ class HomeView(ft.Container):
             archivos_r = [f for f in os.listdir(carpeta_recibos) if f.endswith(('.png', '.jpg', '.jpeg'))]
             total_recibos = len(archivos_r)
         
-        self.texto_cuentas.value = f"{total_cuentas} cuenta{'s' if total_cuentas != 1 else ''} subida{'s' if total_cuentas != 1 else ''}"
-        self.texto_recibos.value = f"{total_recibos} cuenta{'s' if total_recibos != 1 else ''} vendida{'s' if total_recibos != 1 else ''}"
-            
-        self.texto_cuentas.update()
-        self.texto_recibos.update()
+        self._pintar_contadores(total_cuentas, total_recibos)
 
-    def _crear_boton_menu(self, texto, icono, ruta, activo=False):
-        bg_color = "#B23A3A" if activo else ft.Colors.TRANSPARENT
-        return ft.Container(
-            content=ft.Row([
-                ft.Icon(icono, color=ft.Colors.WHITE, size=20),
-                ft.Text(texto, color=ft.Colors.WHITE, size=14)
-            ]),
-            bgcolor=bg_color, padding=12, border_radius=10, ink=True,
-            on_click=lambda _: self.router.cambiar_vista(ruta)
-        )
+    def _pintar_contadores(self, total_cuentas, total_recibos):
+        self.numero_cuentas.value = str(total_cuentas)
+        self.numero_recibos.value = str(total_recibos)
+        self.etiqueta_cuentas.value = "Cuenta subida" if total_cuentas == 1 else "Cuentas subidas"
+        self.etiqueta_recibos.value = "Cuenta vendida" if total_recibos == 1 else "Cuentas vendidas"
+        self.update()
+
+    def _crear_contador(self, icono):
+        # Contador de "CONTENIDO GENERADO", hecho sobre el reloj del iPhone: arriba qué se
+        # cuenta (icono y texto como los de un botón de atajo) y debajo el número en grande,
+        # en Coolvetica y en el gris de las cifras del reloj. Ocupa la misma franja que los
+        # botones de al lado: la etiqueta arranca a la altura de la primera fila y la línea
+        # base del número cae donde acaba la segunda.
+        tam = 116
+        franja = 48 + 10 + 48   # dos filas de botones y su separación
+        # La caja de texto de Coolvetica es mucho más alta que sus cifras (0.667 del tamaño):
+        # sobra aire arriba y abajo. Por eso el número va suelto en un Stack de alto fijo,
+        # sin recorte, y se baja lo que su caja mide por debajo de la línea base, así la
+        # base queda justo en el borde de abajo del Stack. Ese 0.348 del tamaño está medido
+        # en el panel, igual en el de escritorio y en el web (no es el 0.233 que dice el
+        # archivo de la fuente: Flutter le suma parte del interlineado).
+        numero = ft.Text("0", color="#909090", size=tam, font_family="Coolvetica",
+                         left=0, bottom=-round(tam * 0.348))
+        fila_etiqueta, texto_etiqueta = etiqueta(icono)
+        contador = ft.Container(expand=1, content=ft.Column([
+            fila_etiqueta,
+            ft.Stack([numero], height=franja - 20, clip_behavior=ft.ClipBehavior.NONE)
+        ], spacing=0))
+        return contador, numero, texto_etiqueta
+
+    def _atajo(self, icono, texto, ruta):
+        # Botón de la tarjeta de atajos (views/piezas.py): lleva a su vista.
+        return boton_atajo(icono, texto, lambda _: self.router.cambiar_vista(ruta))

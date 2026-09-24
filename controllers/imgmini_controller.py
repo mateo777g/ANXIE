@@ -169,7 +169,7 @@ class ImgMiniController:
         ImgMiniController.dibujar_texto_estilo_meta(capa_textos_3d, (620, 1600), txt_picos, fuente_lados, blur_radius=16, shadow_offset=(12, 12), opacity=245)
         ImgMiniController.dibujar_texto_estilo_meta(capa_textos_3d, (1960, 1555), txt_skins, fuente_skins, blur_radius=16, shadow_offset=(12, 12), opacity=245)
         ImgMiniController.dibujar_texto_estilo_meta(capa_textos_3d, (3300, 1600), txt_emotes, fuente_lados, blur_radius=16, shadow_offset=(12, 12), opacity=245)
-        ImgMiniController.dibujar_texto_estilo_meta(capa_textos_3d, (1960, 1750), "PUEDES ABRIR TICKET PARA COMPRAR O LIL SHOP.", fuente_ticket, blur_radius=12, shadow_offset=(1, 1))
+        ImgMiniController.dibujar_texto_estilo_meta(capa_textos_3d, (1960, 1750), "PUEDES ABRIR TICKET PARA COMPRAR O RESOLVER DUDAS.", fuente_ticket, blur_radius=12, shadow_offset=(1, 1))
 
         textos_deformados = ImgMiniController.aplicar_perspectiva_bloque(capa_textos_3d, inclinacion=150)
         fondo.paste(textos_deformados, POS_BLOQUE, textos_deformados)

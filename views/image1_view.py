@@ -1,7 +1,12 @@
 import os
 import flet as ft
-import datetime
+from views.barra_lateral import crear_barra_lateral
+from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, tarjeta_iphone, boton_atajo,
+                          apagar_boton, campo, hueco_imagen, aviso)
 from controllers.app_controller import AppController
+
+# El diseño del panel encima de lo que ya había, sin mover nada (regla 11 de DISENO.md): cada
+# bloque, campo y botón sigue en su sitio, en su orden y de su tamaño.
 
 class Image1View(ft.Container):
     def __init__(self, router):
@@ -10,96 +15,49 @@ class Image1View(ft.Container):
         self.page_ref = router.page 
         self.expand = True
         self.bgcolor = "#0e0e0e"
+        self.gradient = fondo_pagina()
         self.padding = 0
 
         self.controller = AppController(self, tipo="cuentas")
 
-        # --- LÓGICA DE FECHA ---
-        dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]
-        meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
-        hoy = datetime.datetime.now()
-        fecha_texto = f"{dias[hoy.weekday()]}, {hoy.day} DE {meses[hoy.month - 1]}"
-
         # --- COMPONENTES VISUALES ---
-        self.input_picos = ft.TextField(hint_text="Selecciona el archivo de Picos...", expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, content_padding=10, text_size=12, read_only=True)
-        self.input_skins = ft.TextField(hint_text="Selecciona el archivo de Skins...", expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, content_padding=10, text_size=12, read_only=True)
-        self.input_emotes = ft.TextField(hint_text="Selecciona el archivo de Emotes...", expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, content_padding=10, text_size=12, read_only=True)
-        
-        self.txt_picos = ft.TextField(label="Texto Picos", value="¡PICOS!", expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, text_size=12)
-        self.txt_skins = ft.TextField(label="Texto Skins", value="", expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, text_size=12)
-        self.txt_emotes = ft.TextField(label="Texto Emotes", value="", expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, text_size=12)
+        # Los campos, con la letra y los colores del panel (campo(), en piezas.py): los mismos
+        # textos, valores y relleno de siempre.
+        self.input_picos = campo(pista="Selecciona el archivo de Picos...", relleno=10, solo_lectura=True)
+        self.input_skins = campo(pista="Selecciona el archivo de Skins...", relleno=10, solo_lectura=True)
+        self.input_emotes = campo(pista="Selecciona el archivo de Emotes...", relleno=10, solo_lectura=True)
 
-        self.input_nombre = ft.TextField(
-            label="Nombre de la descarga", 
-            value="cuenta", 
-            bgcolor="#0e0e0e", 
-            border_color=ft.Colors.WHITE24, 
-            color=ft.Colors.WHITE, 
-            text_size=12
-        )
+        self.txt_picos = campo(etiqueta="Texto Picos", valor="¡PICOS!")
+        self.txt_skins = campo(etiqueta="Texto Skins")
+        self.txt_emotes = campo(etiqueta="Texto Emotes")
+
+        self.input_nombre = campo(etiqueta="Nombre de la descarga", valor="cuenta", expand=False)
 
         # --- CONTENEDOR DE VISTA PREVIA ---
-        self.texto_espera = ft.Text("Esperando Generación...", color=ft.Colors.WHITE54, size=14)
+        self.texto_espera = ft.Text("Esperando Generación...", color=ft.Colors.WHITE54, size=14,
+                                    font_family="CreatoDisplayLight")
         self.preview_image = ft.Image(src="", expand=True, visible=False)
 
-        self.image_container = ft.Container(
-            expand=True,  # Magia vertical: ocupa todo el hueco hacia abajo
-            width=9999,   # Magia horizontal: fuerza a Flet a ocupar todo el ancho disponible
-            bgcolor="#0e0e0e",
-            border_radius=10,
-            border=ft.Border(
-                top=ft.BorderSide(2, "#B23A3A"), bottom=ft.BorderSide(2, ft.Colors.WHITE12),
-                left=ft.BorderSide(2, ft.Colors.WHITE12), right=ft.BorderSide(2, ft.Colors.WHITE12)
-            ),
-            content=ft.Column(
-                [self.texto_espera, self.preview_image], 
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER
-            )
-        )
+        # El hueco de la imagen (hueco_imagen(), en piezas.py): ocupa todo el alto que queda y
+        # todo el ancho, como siempre.
+        self.image_container = hueco_imagen(ft.Column(
+            [self.texto_espera, self.preview_image],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        ))
 
         # --- BOTONES ---
-        self.btn_generar = ft.ElevatedButton(
-            "Generar Imagen", 
-            icon=ft.Icons.IMAGE, 
-            bgcolor="#B23A3A", 
-            color=ft.Colors.WHITE,
-            expand=True,
-            height=45,
-            on_click=self.controller.procesar_clicks
-        )
+        # Botones de atajo, con su animación, en la medida de siempre (45 de alto, a partes
+        # iguales). "Descargar" va apagado (al 40 %, sin eventos) hasta que se genera una imagen.
+        self.btn_generar = boton_atajo(ft.Icons.IMAGE, "Generar Imagen",
+                                       self.controller.procesar_clicks, alto=45)
 
-        self.btn_descargar = ft.ElevatedButton(
-            "Descargar", 
-            icon=ft.Icons.DOWNLOAD, 
-            bgcolor="#333333", 
-            color=ft.Colors.WHITE,
-            expand=True,
-            height=45,
-            disabled=True, 
-            on_click=self.controller.descargar_imagen
-        )
+        self.btn_descargar = boton_atajo(ft.Icons.DOWNLOAD, "Descargar",
+                                         self.controller.descargar_imagen, alto=45)
+        apagar_boton(self.btn_descargar, True)
 
         # --- SIDEBAR ---
-        sidebar = ft.Container(
-            width=250,
-            bgcolor="#1a1a1a",
-            padding=20,
-            content=ft.Column([
-                ft.Row([
-                    ft.CircleAvatar(radius=25, background_image_src="assets/logo.jpg", bgcolor=ft.Colors.WHITE),
-                    ft.Column([
-                        ft.Text("ANXIE STORE", weight="bold", italic=True, size=18),
-                        ft.Text("PANEL", color=ft.Colors.RED_700, size=10, weight="bold")
-                    ], spacing=0)
-                ]),
-                ft.Divider(height=40, color=ft.Colors.WHITE24),
-                self._crear_boton_menu("Inicio", ft.Icons.HOME, "home"),
-                self._crear_boton_menu("Crear contenido", ft.Icons.AUTO_AWESOME_OUTLINED, "contenido", activo=True),
-                self._crear_boton_menu("Mi biblioteca", ft.Icons.INBOX, "biblioteca"),
-                self._crear_boton_menu("Ajustes", ft.Icons.SETTINGS, "ajustes"),
-            ], spacing=10)
-        )
+        sidebar = crear_barra_lateral(self.router, "contenido")
 
         # --- PANEL IZQUIERDO ---
         left_panel = ft.Container(
@@ -108,7 +66,7 @@ class Image1View(ft.Container):
                 ft.Row([
                     # 1. Tu columna de siempre, pero le ponemos expand=True para que ocupe lo que pueda
                     ft.Column([
-                        ft.Text("Configuración de la imagen", color=ft.Colors.WHITE54, weight="bold"),
+                        ft.Text("Configuración de la imagen", color=ft.Colors.WHITE54, font_family="CreatoDisplay"),
                         self._crear_bloque_input("Sección Picos", self.input_picos, self.txt_picos),
                         self._crear_bloque_input("Sección Skins", self.input_skins, self.txt_skins),
                         self._crear_bloque_input("Sección Emotes", self.input_emotes, self.txt_emotes),
@@ -121,23 +79,18 @@ class Image1View(ft.Container):
         )
 
         # --- PANEL DERECHO ---
-        right_panel = ft.Container(
-            expand=1,
-            bgcolor="#1a1a1a",
-            border_radius=15,
-            padding=25,
-            border=ft.Border(
-                top=ft.BorderSide(1, ft.Colors.WHITE12), bottom=ft.BorderSide(1, ft.Colors.WHITE12),
-                left=ft.BorderSide(1, ft.Colors.WHITE12), right=ft.BorderSide(1, ft.Colors.WHITE12)
-            ),
-            content=ft.Column([
-                ft.Text("Vista Previa", color=ft.Colors.WHITE, size=20, weight="bold"),
+        # Una tarjeta del panel en la medida del panel de antes: radio 15, y el borde de 1 px +
+        # padding 25 dejan el contenido donde lo dejaban.
+        right_panel = tarjeta_iphone(
+            ft.Column([
+                ft.Text("Vista Previa", color=ft.Colors.WHITE, size=20, font_family="CreatoDisplay"),
                 self.image_container, # Ahora sí, se va a estirar a lo bestia
                 ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                 self.input_nombre, 
                 ft.Divider(height=15, color=ft.Colors.WHITE12),
                 ft.Row([self.btn_generar, self.btn_descargar], spacing=15)
-            ], spacing=15, expand=True) # <- Importante que este expand siga aquí
+            ], spacing=15, expand=True), # <- Importante que este expand siga aquí
+            radio=15, padding=25
         )
 
         # --- ARMADO FINAL ---
@@ -145,10 +98,12 @@ class Image1View(ft.Container):
             expand=True,
             padding=40,
             content=ft.Column([
-                ft.Text(fecha_texto, color=ft.Colors.RED_300, size=14, weight="w500"),
+                fecha_vista(),
                 ft.Row([
-                    ft.IconButton(ft.Icons.ARROW_BACK_IOS, icon_color=ft.Colors.WHITE54, on_click=lambda _: self.router.cambiar_vista("contenido")),
-                    ft.Text("Generar Imagen de Venta", size=35, weight="w500", color=ft.Colors.WHITE),
+                    # La flecha, un botón de atajo redondo de 40: la medida del botón de antes.
+                    boton_atajo(ft.Icons.ARROW_BACK_IOS_NEW, None,
+                                lambda _: self.router.cambiar_vista("contenido"), ancho=40, alto=40),
+                    titulo_vista("Generar Imagen de Venta", 35),
                 ], alignment=ft.MainAxisAlignment.START),
                 ft.Container(height=20),
                 ft.Row([left_panel, right_panel], expand=True, spacing=40, vertical_alignment=ft.CrossAxisAlignment.START)
@@ -208,7 +163,7 @@ class Image1View(ft.Container):
         self.preview_image.visible = True
         
         # 3. Desbloqueamos el botón
-        self.btn_descargar.disabled = False
+        apagar_boton(self.btn_descargar, False)
         
         # 4. Actualizamos
         self.image_container.update()
@@ -216,34 +171,23 @@ class Image1View(ft.Container):
 
 
     def mostrar_snack(self, mensaje):
-        self.page_ref.overlay.append(ft.SnackBar(ft.Text(mensaje), open=True))
-        self.page_ref.update()
+        # Abajo del todo, entre los botones y el borde: a 40, como en las otras vistas,
+        # taparía medio botón "Generar".
+        aviso(self.page_ref, mensaje, abajo=9)
 
 
     # ==========================================
     # HELPERS
     # ==========================================
     def _crear_bloque_input(self, titulo, path_field, text_field):
-        return ft.Container(
-            bgcolor="#1a1a1a", padding=15, border_radius=10,
-            border=ft.Border(
-                top=ft.BorderSide(1, ft.Colors.WHITE12), bottom=ft.BorderSide(1, ft.Colors.WHITE12),
-                left=ft.BorderSide(1, ft.Colors.WHITE12), right=ft.BorderSide(1, ft.Colors.WHITE12)
-            ),
-            content=ft.Column([
-                ft.Text(titulo, color=ft.Colors.WHITE, weight="bold"),
+        # Una tarjeta del panel en la medida del bloque de antes (radio 10, y borde + padding
+        # 15), que no se estira en la columna. La carpeta, un botón de atajo redondo de 40.
+        return tarjeta_iphone(ft.Column([
+                ft.Text(titulo, color=ft.Colors.WHITE, font_family="CreatoDisplay"),
                 ft.Row([
                     path_field,
-                    ft.IconButton(icon=ft.Icons.FOLDER_OPEN, icon_color="#B23A3A", on_click=lambda _: self.abrir_explorador_nativo(path_field))
+                    boton_atajo(ft.Icons.FOLDER_OPEN, None,
+                                lambda _: self.abrir_explorador_nativo(path_field), ancho=40, alto=40)
                 ]),
                 ft.Row([ft.Icon(ft.Icons.TEXT_FIELDS, color=ft.Colors.WHITE54, size=20), text_field])
-            ])
-        )
-
-
-    def _crear_boton_menu(self, texto, icono, ruta, activo=False):
-        return ft.Container(
-            content=ft.Row([ft.Icon(icono, color=ft.Colors.WHITE, size=20), ft.Text(texto, color=ft.Colors.WHITE, size=14)]),
-            bgcolor="#B23A3A" if activo else ft.Colors.TRANSPARENT, padding=12, border_radius=10, ink=True,
-            on_click=lambda _: self.router.cambiar_vista(ruta)
-        )
+            ]), radio=10, padding=15, expand=None)

@@ -1,7 +1,12 @@
 import os
-import datetime  # <-- Agregamos esta importación
 import flet as ft
+from views.barra_lateral import crear_barra_lateral
+from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, tarjeta_iphone, boton_atajo,
+                          apagar_boton, campo, opcion_radio, hueco_imagen, aviso)
 from controllers.app_controller import AppController
+
+# El diseño del panel encima de lo que ya había, sin mover nada (regla 11 de DISENO.md): cada
+# bloque, campo y botón sigue en su sitio, en su orden y de su tamaño.
 
 class ReciboPequenoView(ft.Container):
     def __init__(self, router):
@@ -10,91 +15,56 @@ class ReciboPequenoView(ft.Container):
         self.page_ref = router.page 
         self.expand = True
         self.bgcolor = "#0e0e0e"
+        self.gradient = fondo_pagina()
         self.padding = 0
 
         self.controller = AppController(self, tipo="recibos_mini")  # <-- Indicamos que es un recibo mini
 
-        # --- LÓGICA DE FECHA ---
-        dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]
-        meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
-        hoy = datetime.datetime.now()
-        fecha_texto = f"{dias[hoy.weekday()]}, {hoy.day} DE {meses[hoy.month - 1]}"
-
         # --- COMPONENTES VISUALES ---
-        self.input_skin = ft.TextField(
-            hint_text="Selecciona el archivo de Skins...", 
-            expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, content_padding=10, text_size=12, read_only=True
-        )
-        
-        self.txt_correo1 = ft.TextField(
-            label="Correo", value="", 
-            expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, text_size=12
-        )
-        self.txt_correo2 = ft.TextField(
-            label="Contraseña", value="", 
-            expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, text_size=12
-        )
-        
+        # Los campos, con la letra y los colores del panel (campo(), en piezas.py): los mismos
+        # textos, valores y relleno de siempre.
+        self.input_skin = campo(pista="Selecciona el archivo de Skins...", relleno=10, solo_lectura=True)
+
+        self.txt_correo1 = campo(etiqueta="Correo")
+        self.txt_correo2 = campo(etiqueta="Contraseña")
+
         # === NUEVO SELECTOR NFA / FA ===
+        # Sin rojo: la elegida en blanco puro y la otra al 54 % (opcion_radio(), en piezas.py).
         self.radio_tipo_cuenta = ft.RadioGroup(
             value="NFA",
             content=ft.Row([
-                ft.Radio(value="NFA", label="NFA", fill_color=ft.Colors.RED_300),
-                ft.Radio(value="FA", label="FA", fill_color=ft.Colors.RED_300)
+                opcion_radio("NFA"),
+                opcion_radio("FA")
             ])
         )
 
         # Ahora el usuario solo lleva el nombre
-        self.txt_usuario = ft.TextField(
-            label="Usuario", value="", 
-            expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, text_size=12
-        )
-        
-        self.txt_fecha = ft.TextField(
-            label="Fecha", value="", hint_text="(Deja vacío para automático)",
-            expand=True, bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, text_size=12
-        )
+        self.txt_usuario = campo(etiqueta="Usuario")
 
-        self.input_nombre = ft.TextField(
-            label="Nombre de la descarga", 
-            value="recibo", 
-            bgcolor="#0e0e0e", border_color=ft.Colors.WHITE24, color=ft.Colors.WHITE, text_size=12
-        )
+        self.txt_fecha = campo(etiqueta="Fecha", pista="(Deja vacío para automático)")
+
+        self.input_nombre = campo(etiqueta="Nombre de la descarga", valor="recibo", expand=False)
 
         # --- VISTA PREVIA ---
-        self.texto_espera = ft.Text("Esperando Generación...", color=ft.Colors.WHITE54, size=14)
+        self.texto_espera = ft.Text("Esperando Generación...", color=ft.Colors.WHITE54, size=14,
+                                    font_family="CreatoDisplayLight")
         self.preview_image = ft.Image(src="", expand=True, visible=False)
 
-        self.image_container = ft.Container(
-            expand=True, width=9999, bgcolor="#0e0e0e", border_radius=10,
-            border=ft.Border(top=ft.BorderSide(2, "#B23A3A"), bottom=ft.BorderSide(2, ft.Colors.WHITE12), left=ft.BorderSide(2, ft.Colors.WHITE12), right=ft.BorderSide(2, ft.Colors.WHITE12)),
-            content=ft.Column([self.texto_espera, self.preview_image], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        # El hueco de la imagen (hueco_imagen(), en piezas.py): ocupa todo el alto que queda y
+        # todo el ancho, como siempre.
+        self.image_container = hueco_imagen(
+            ft.Column([self.texto_espera, self.preview_image], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         )
 
         # --- BOTONES ---
-        self.btn_generar = ft.ElevatedButton("Generar Recibo", icon=ft.Icons.RECEIPT_LONG, bgcolor="#B23A3A", color=ft.Colors.WHITE, expand=True, height=45, on_click=self.controller.procesar_clicks)
-        self.btn_descargar = ft.ElevatedButton("Descargar", icon=ft.Icons.DOWNLOAD, bgcolor="#333333", color=ft.Colors.WHITE, expand=True, height=45, disabled=True, on_click=self.controller.descargar_imagen)
+        # Botones de atajo, con su animación, en la medida de siempre (45 de alto, a partes
+        # iguales). "Descargar" va apagado (al 40 %, sin eventos) hasta que se genera un recibo.
+        self.btn_generar = boton_atajo(ft.Icons.RECEIPT_LONG, "Generar Recibo", self.controller.procesar_clicks, alto=45)
+        self.btn_descargar = boton_atajo(ft.Icons.DOWNLOAD, "Descargar", self.controller.descargar_imagen, alto=45)
+        apagar_boton(self.btn_descargar, True)
 
         # --- SIDEBAR ---
-        sidebar = ft.Container(
-            width=250,
-            bgcolor="#1a1a1a",
-            padding=20,
-            content=ft.Column([
-                ft.Row([
-                    ft.CircleAvatar(radius=25, background_image_src="assets/logo.jpg", bgcolor=ft.Colors.WHITE),
-                    ft.Column([
-                        ft.Text("ANXIE STORE", weight="bold", italic=True, size=18),
-                        ft.Text("PANEL", color=ft.Colors.RED_700, size=10, weight="bold")
-                    ], spacing=0)
-                ]),
-                ft.Divider(height=40, color=ft.Colors.WHITE24),
-                self._crear_boton_menu("Inicio", ft.Icons.HOME, "home"),
-                self._crear_boton_menu("Crear contenido", ft.Icons.AUTO_AWESOME_OUTLINED, "contenido", activo=True),
-                self._crear_boton_menu("Mi biblioteca", ft.Icons.INBOX, "biblioteca"),
-                self._crear_boton_menu("Ajustes", ft.Icons.SETTINGS, "ajustes"),
-            ], spacing=10)
-        )
+        sidebar = crear_barra_lateral(self.router, "contenido")
 
         # --- PANEL IZQUIERDO ---
         left_panel = ft.Container(
@@ -102,24 +72,20 @@ class ReciboPequenoView(ft.Container):
             content=ft.Column([
                 ft.Row([
                     ft.Column([
-                        ft.Text("Configuración del Recibo", color=ft.Colors.WHITE54, weight="bold"),
+                        ft.Text("Configuración del Recibo", color=ft.Colors.WHITE54, font_family="CreatoDisplay"),
                         self._crear_bloque_input("Imagen Skins", self.input_skin),
-                        ft.Container(
-                            bgcolor="#1a1a1a", padding=15, border_radius=10, border=ft.Border.all(1, ft.Colors.WHITE12),
-                            content=ft.Column([
-                                ft.Text("Textos Superiores", color=ft.Colors.WHITE, weight="bold"),
+                        # Tarjetas del panel en la medida de los bloques de antes (radio 10, y
+                        # borde + padding 15), que no se estiran en la columna.
+                        tarjeta_iphone(ft.Column([
+                                ft.Text("Textos Superiores", color=ft.Colors.WHITE, font_family="CreatoDisplay"),
                                 self.txt_correo1, self.txt_correo2
-                            ])
-                        ),
-                        ft.Container(
-                            bgcolor="#1a1a1a", padding=15, border_radius=10, border=ft.Border.all(1, ft.Colors.WHITE12),
-                            content=ft.Column([
-                                ft.Text("Textos Inferiores", color=ft.Colors.WHITE, weight="bold"),
-                                self.radio_tipo_cuenta, 
-                                self.txt_usuario, 
+                            ]), radio=10, padding=15, expand=None),
+                        tarjeta_iphone(ft.Column([
+                                ft.Text("Textos Inferiores", color=ft.Colors.WHITE, font_family="CreatoDisplay"),
+                                self.radio_tipo_cuenta,
+                                self.txt_usuario,
                                 self.txt_fecha
-                            ])
-                        )
+                            ]), radio=10, padding=15, expand=None)
                     ], spacing=15, expand=True),
                     ft.Container(width=25)
                 ])
@@ -127,24 +93,28 @@ class ReciboPequenoView(ft.Container):
         )
 
         # --- PANEL DERECHO Y ARMADO FINAL ---
-        right_panel = ft.Container(
-            expand=1, bgcolor="#1a1a1a", border_radius=15, padding=25, border=ft.Border.all(1, ft.Colors.WHITE12),
-            content=ft.Column([
-                ft.Text("Vista Previa del Recibo", color=ft.Colors.WHITE, size=20, weight="bold"),
+        # Una tarjeta del panel en la medida del panel de antes: radio 15, y el borde de 1 px +
+        # padding 25 dejan el contenido donde lo dejaban.
+        right_panel = tarjeta_iphone(
+            ft.Column([
+                ft.Text("Vista Previa del Recibo", color=ft.Colors.WHITE, size=20, font_family="CreatoDisplay"),
                 self.image_container, ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                 self.input_nombre, ft.Divider(height=15, color=ft.Colors.WHITE12),
                 ft.Row([self.btn_generar, self.btn_descargar], spacing=15)
-            ], spacing=15, expand=True) 
+            ], spacing=15, expand=True),
+            radio=15, padding=25
         )
 
         main_content = ft.Container(
             expand=True, padding=40,
             content=ft.Column([
-                # 🔥 ACÁ HICIMOS EL CAMBIO PARA MOSTRAR LA FECHA DINÁMICA 🔥
-                ft.Text(fecha_texto, color=ft.Colors.RED_300, size=14, weight="w500"),
+                # La fecha de las otras vistas (fecha_vista(), en piezas.py)
+                fecha_vista(),
                 ft.Row([
-                    ft.IconButton(ft.Icons.ARROW_BACK_IOS, icon_color=ft.Colors.WHITE54, on_click=lambda _: self.router.cambiar_vista("contenido")),
-                    ft.Text("Generar Recibo Pequeño", size=35, weight="w500", color=ft.Colors.WHITE),
+                    # La flecha, un botón de atajo redondo de 40: la medida del botón de antes.
+                    boton_atajo(ft.Icons.ARROW_BACK_IOS_NEW, None,
+                                lambda _: self.router.cambiar_vista("contenido"), ancho=40, alto=40),
+                    titulo_vista("Generar Recibo Pequeño", 35),
                 ], alignment=ft.MainAxisAlignment.START),
                 ft.Container(height=20),
                 ft.Row([left_panel, right_panel], expand=True, spacing=40, vertical_alignment=ft.CrossAxisAlignment.START)
@@ -189,29 +159,23 @@ class ReciboPequenoView(ft.Container):
         self.texto_espera.visible = False
         self.preview_image.src = ruta_absoluta
         self.preview_image.visible = True
-        self.btn_descargar.disabled = False
+        apagar_boton(self.btn_descargar, False)
         self.image_container.update()
         self.btn_descargar.update()
 
     def mostrar_snack(self, mensaje):
-        self.page_ref.overlay.append(ft.SnackBar(ft.Text(mensaje), open=True))
-        self.page_ref.update()
+        # Abajo del todo, entre los botones y el borde: a 40, como en las otras vistas,
+        # taparía medio botón "Generar".
+        aviso(self.page_ref, mensaje, abajo=9)
 
     def _crear_bloque_input(self, titulo, path_field):
-        return ft.Container(
-            bgcolor="#1a1a1a", padding=15, border_radius=10, border=ft.Border.all(1, ft.Colors.WHITE12),
-            content=ft.Column([
-                ft.Text(titulo, color=ft.Colors.WHITE, weight="bold"),
+        # Una tarjeta del panel en la medida del bloque de antes (radio 10, y borde + padding
+        # 15), que no se estira en la columna. La carpeta, un botón de atajo redondo de 40.
+        return tarjeta_iphone(ft.Column([
+                ft.Text(titulo, color=ft.Colors.WHITE, font_family="CreatoDisplay"),
                 ft.Row([
                     path_field,
-                    ft.IconButton(icon=ft.Icons.FOLDER_OPEN, icon_color="#B23A3A", on_click=lambda _: self.abrir_explorador_nativo(path_field))
+                    boton_atajo(ft.Icons.FOLDER_OPEN, None,
+                                lambda _: self.abrir_explorador_nativo(path_field), ancho=40, alto=40)
                 ])
-            ])
-        )
-
-    def _crear_boton_menu(self, texto, icono, ruta, activo=False):
-        return ft.Container(
-            content=ft.Row([ft.Icon(icono, color=ft.Colors.WHITE, size=20), ft.Text(texto, color=ft.Colors.WHITE, size=14)]),
-            bgcolor="#B23A3A" if activo else ft.Colors.TRANSPARENT, padding=12, border_radius=10, ink=True,
-            on_click=lambda _: self.router.cambiar_vista(ruta)
-        )
+            ]), radio=10, padding=15, expand=None)

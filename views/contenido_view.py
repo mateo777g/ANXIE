@@ -1,5 +1,18 @@
 import flet as ft
-import datetime
+
+from views.barra_lateral import crear_barra_lateral
+from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
+                          tarjeta_iphone, boton_atajo_suelto)
+
+# Las cuatro tareas: título, subtítulo, icono (el mismo que su botón de atajo en Inicio) y la
+# ruta de MainController.cambiar_vista a la que lleva.
+TAREAS = [
+    ("IMAGEN CUENTAS", "Genera imágenes para cuentas.", ft.Icons.IMAGE, "generador_miniaturas"),
+    ("IMAGEN RECIBOS", "Genera tickets de compra.", ft.Icons.RECEIPT_LONG, "recibo"),
+    ("CUENTA PEQUEÑA", "Genera imágenes de cuenta en formato reducido.", ft.Icons.IMAGE_ASPECT_RATIO, "cuenta_pequena"),
+    ("RECIBO PEQUEÑO", "Genera tickets de compra en formato reducido.", ft.Icons.RECEIPT, "recibo_pequeno"),
+]
+
 
 class ContenidoView(ft.Container):
     def __init__(self, router):
@@ -8,159 +21,51 @@ class ContenidoView(ft.Container):
         self.page_ref = router.page
         self.expand = True
         self.bgcolor = "#0e0e0e"
+        self.gradient = fondo_pagina()
         self.padding = 0
-        
-        # --- LÓGICA PARA LA FECHA DINÁMICA ---
-        dias = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]
-        meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
-        hoy = datetime.datetime.now()
-        fecha_texto = f"{dias[hoy.weekday()]}, {hoy.day} DE {meses[hoy.month - 1]}"
-
-        # --- BARRA LATERAL (SIDEBAR) ---
-        sidebar = ft.Container(
-            width=250,
-            bgcolor="#1a1a1a",
-            padding=20,
-            content=ft.Column([
-                # Logo y Título
-                ft.Row([
-                    ft.CircleAvatar(radius=25, background_image_src="assets/logo.jpg", bgcolor=ft.Colors.WHITE),
-                    ft.Column([
-                        ft.Text("ANXIE STORE", weight="bold", italic=True, size=18),
-                        ft.Text("PANEL", color=ft.Colors.RED_700, size=10, weight="bold")
-                    ], spacing=0)
-                ]),
-                ft.Divider(height=40, color=ft.Colors.WHITE24),
-                
-                # Menú de navegación
-                self._crear_boton_menu("Inicio", ft.Icons.HOME, "home", activo=False),
-                self._crear_boton_menu("Crear contenido", ft.Icons.AUTO_AWESOME_OUTLINED, "contenido", activo=True),
-                self._crear_boton_menu("Mi biblioteca", ft.Icons.INBOX, "biblioteca"),
-                self._crear_boton_menu("Ajustes", ft.Icons.SETTINGS, "ajustes"),
-            ], spacing=10)
-        )
 
         # --- CONTENIDO PRINCIPAL ---
+        # La cabecera de Inicio (fecha, título, hueco de 25) y las cuatro tareas en la fila de
+        # sus tarjetas: 250 de alto y separación 10. Así el hueco del medio cae justo donde el
+        # de las dos tarjetas de Inicio, y títulos, subtítulos y botones en el mismo píxel.
         main_content = ft.Container(
             expand=True,
             padding=40,
             content=ft.Column([
-                # Fecha
-                ft.Text(fecha_texto, color=ft.Colors.RED_300, size=14, weight="w500"),
-                
-                # Título de la sección
-                ft.Text("Crear contenido", size=40, weight="w500", color=ft.Colors.WHITE),
-                ft.Text("Selecciona una tarea para comenzar.", color=ft.Colors.WHITE54, size=14),
-                
-                ft.Container(height=30), # Espacio elegante para que respire la vista
-                
-                # --- NUEVA FILA DE TARJETAS REDISEÑADAS ---
-                ft.Row([
-                    # Tarjeta 1: Imagen para venta (Activa)
-                    self._crear_bloque_atajo(
-                        texto="Imagen Cuentas",
-                        descripcion="Genera imagenes para cuentas",
-                        icono=ft.Icons.IMAGE,
-                        color_icono=ft.Colors.PURPLE_300,
-                        ruta="generador_miniaturas",
-                        bloqueado=False
-                    ),
-                    
-                    # Tarjeta 2: Imagen Recibos 
-                    self._crear_bloque_atajo(
-                        texto="Imagen Recibos",
-                        descripcion="Genera tickets de compra", 
-                        icono=ft.Icons.RECEIPT_LONG, 
-                        color_icono=ft.Colors.BLUE_300, 
-                        ruta="recibo", 
-                        bloqueado=False 
-                    ),
-
-                    # 🔥 Tarjeta 3: Cuenta Pequeña (NUEVO) 🔥
-                    self._crear_bloque_atajo(
-                        texto="Cuenta Pequeña",
-                        descripcion="Genera imágenes de cuenta en formato reducido", 
-                        icono=ft.Icons.IMAGE_ASPECT_RATIO, 
-                        color_icono=ft.Colors.PURPLE_200, 
-                        ruta="cuenta_pequena", 
-                        bloqueado=False 
-                    ),
-
-                    # 🔥 Tarjeta 4: Recibo Pequeño (NUEVO) 🔥
-                    self._crear_bloque_atajo(
-                        texto="Recibo Pequeño",
-                        descripcion="Genera tickets de compra en formato reducido", 
-                        icono=ft.Icons.RECEIPT, 
-                        color_icono=ft.Colors.BLUE_200, 
-                        ruta="recibo_pequeno", 
-                        bloqueado=False 
-                    ),
-                ], alignment=ft.MainAxisAlignment.START, spacing=20, wrap=True) # 🔥 Añadimos wrap=True para que bajen de línea si no caben
+                fecha_vista(),
+                titulo_vista("Crear contenido"),
+                ft.Container(height=25),
+                ft.Row(
+                    [self._crear_tarea(*tarea) for tarea in TAREAS],
+                    height=250,
+                    spacing=10,
+                    vertical_alignment=ft.CrossAxisAlignment.STRETCH
+                )
             ])
         )
 
-        # UNIMOS TODO EN self.content
-        self.content = ft.Row([
-            sidebar,
-            main_content
-        ], expand=True, spacing=0)
+        self.content = ft.Row([crear_barra_lateral(self.router, "contenido"), main_content],
+                              expand=True, spacing=0)
 
-    # --- NUEVO MÉTODO PARA BLOQUES DE ATAJO PREMIUM ---
-    def _crear_bloque_atajo(self, texto, descripcion, icono, color_icono, ruta=None, bloqueado=False):
-        return ft.Container(
-            width=240,
-            height=170,
-            bgcolor="#1a1a1a" if not bloqueado else "#161616",
-            border_radius=15,
-            padding=20,
-            # Cambia el borde sutilmente según el estado para dar profundidad
-            border=ft.Border(
-                top=ft.BorderSide(1, ft.Colors.WHITE12 if not bloqueado else ft.Colors.WHITE10),
-                bottom=ft.BorderSide(1, ft.Colors.WHITE12 if not bloqueado else ft.Colors.WHITE10),
-                left=ft.BorderSide(1, ft.Colors.WHITE12 if not bloqueado else ft.Colors.WHITE10),
-                right=ft.BorderSide(1, ft.Colors.WHITE12 if not bloqueado else ft.Colors.WHITE10)
-            ),
-            # Si está bloqueado, apagamos el efecto de click y desactivamos el contenedor
-            ink=not bloqueado,
-            on_click=lambda _: self.router.cambiar_vista(ruta) if (not bloqueado and ruta) else None,
-            
-            content=ft.Column([
-                # Fila superior de la tarjeta (Icono principal + Candado si aplica)
-                ft.Row([
-                    ft.Icon(icono, size=30, color=color_icono),
-                    ft.Icon(ft.Icons.LOCK_OUTLINED, size=16, color=ft.Colors.WHITE24) if bloqueado else ft.Container()
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                
-                ft.Container(height=12), # Separación interna
-                
-                # Textos alineados a la izquierda (Look moderno de Dashboard)
-                ft.Text(
-                    texto, 
-                    color=ft.Colors.WHITE if not bloqueado else ft.Colors.WHITE38, 
-                    weight="bold", 
-                    size=16
-                ),
-                ft.Container(height=4),
-                ft.Text(
-                    descripcion, 
-                    color=ft.Colors.WHITE54 if not bloqueado else ft.Colors.WHITE24, 
-                    size=12,
-                    max_lines=2
-                )
-            ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.START)
-        )
-
-    # --- HELPER PARA BOTONES DEL MENÚ ---
-    def _crear_boton_menu(self, texto, icono, ruta, activo=False):
-        bg_color = "#B23A3A" if activo else ft.Colors.TRANSPARENT
-        return ft.Container(
-            content=ft.Row([
-                ft.Icon(icono, color=ft.Colors.WHITE, size=20),
-                ft.Text(texto, color=ft.Colors.WHITE, size=14)
-            ]),
-            bgcolor=bg_color,
-            padding=12,
-            border_radius=10,
-            ink=True,
+    def _crear_tarea(self, titulo, subtitulo, icono, ruta, bloqueado=False):
+        # Una tarjeta por tarea: la cabecera de siempre y, abajo, el botón de atajo de Inicio
+        # (mismo icono). La tarjeta entera se pulsa: con el cursor en cualquier parte de ella,
+        # su botón se enciende como un atajo, y al pulsar se hunde y abre la tarea. La tarjeta
+        # no se mueve.
+        boton, _, encender, hundir = boton_atajo_suelto(icono, "Abrir")
+        # El botón va abajo, y 7 px por encima del fondo: en Inicio, cabecera y franja de
+        # botones miden 191 de los 198 que caben en la tarjeta, y sobran 7 bajo la segunda
+        # fila. Así el botón acaba justo donde esa fila (y queda el mismo aire abajo que arriba).
+        contenido = ft.Container(padding=ft.Padding(bottom=7), content=ft.Column([
+            *cabecera_tarjeta(titulo, subtitulo),
+            ft.Container(expand=True, alignment=ft.Alignment.BOTTOM_LEFT, content=ft.Row([boton])),
+        ], spacing=10))
+        if bloqueado:
+            # Hoy no hay ninguna bloqueada: apagada y sin eventos.
+            return ft.Container(expand=1, opacity=0.4, content=tarjeta_iphone(contenido))
+        return tarjeta_iphone(
+            contenido,
+            on_hover=lambda e: encender(e.data in (True, "true")),
+            on_tap_down=lambda _: hundir(),
             on_click=lambda _: self.router.cambiar_vista(ruta)
         )

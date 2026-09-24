@@ -17,6 +17,14 @@ class MainController:
         self.page.title = "Anxie Store - Panel"
         self.page.theme_mode = "dark"
         self.page.padding = 0 
+        # Creato Display, la letra del diseño nuevo (ver DISENO.md). Se registra aquí, una sola
+        # vez, porque la barra lateral la usa en todas las vistas.
+        fuentes = dict(getattr(self.page, "fonts", {}) or {})
+        fuentes["CreatoDisplay"] = "assets/CreatoDisplay-Regular.otf"
+        fuentes["CreatoDisplayLight"] = "assets/CreatoDisplay-Light.otf"
+        # Coolvetica (condensada), solo para los números de los contadores de Inicio.
+        fuentes["Coolvetica"] = "assets/Coolvetica Rg Cram.otf"
+        self.page.fonts = fuentes
         
         self.content_container = ft.Container(expand=True)
         self.page.add(self.content_container)
