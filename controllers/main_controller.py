@@ -24,11 +24,14 @@ class MainController:
         tema.cargar()
         self.page.theme_mode = tema.C.modo
         self.page.padding = 0 
-        # Creato Display, la letra del diseño nuevo (ver DISENO.md). Se registra aquí, una sola
-        # vez, porque la barra lateral la usa en todas las vistas.
+        # La letra del panel (ver DISENO.md), registrada aquí una sola vez porque la barra lateral
+        # la usa en todas las vistas. Las familias se llaman por lo que son (LetraTitulo,
+        # LetraTexto), no por la fuente: cambiar de fuente es cambiar estas dos líneas.
         fuentes = dict(getattr(self.page, "fonts", {}) or {})
-        fuentes["CreatoDisplay"] = "assets/CreatoDisplay-Regular.otf"
-        fuentes["CreatoDisplayLight"] = "assets/CreatoDisplay-Light.otf"
+        # Plus Jakarta Sans, la de la página web (26/09, la eligió el dueño): títulos en Bold y el
+        # resto en Medium (a su cliente la Creato Display Regular / Light le parecía muy delgada).
+        fuentes["LetraTitulo"] = "assets/PlusJakartaSans-Bold.ttf"
+        fuentes["LetraTexto"] = "assets/PlusJakartaSans-Medium.ttf"
         # Coolvetica (condensada), solo para los números de los contadores de Inicio.
         fuentes["Coolvetica"] = "assets/Coolvetica Rg Cram.otf"
         self.page.fonts = fuentes

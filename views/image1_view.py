@@ -36,7 +36,7 @@ class Image1View(ft.Container):
 
         # --- CONTENEDOR DE VISTA PREVIA ---
         self.texto_espera = ft.Text("Esperando Generación...", color=C.texto_suave, size=14,
-                                    font_family="CreatoDisplayLight")
+                                    font_family="LetraTexto")
         self.preview_image = ft.Image(src="", expand=True, visible=False)
 
         # El hueco de la imagen (hueco_imagen(), en piezas.py): ocupa todo el alto que queda y
@@ -67,7 +67,7 @@ class Image1View(ft.Container):
                 ft.Row([
                     # 1. Tu columna de siempre, pero le ponemos expand=True para que ocupe lo que pueda
                     ft.Column([
-                        ft.Text("Configuración de la imagen", color=C.texto_suave, font_family="CreatoDisplay"),
+                        ft.Text("Configuración de la imagen", color=C.texto_suave, font_family="LetraTitulo"),
                         self._crear_bloque_input("Sección Picos", self.input_picos, self.txt_picos),
                         self._crear_bloque_input("Sección Skins", self.input_skins, self.txt_skins),
                         self._crear_bloque_input("Sección Emotes", self.input_emotes, self.txt_emotes),
@@ -84,7 +84,7 @@ class Image1View(ft.Container):
         # padding 25 dejan el contenido donde lo dejaban.
         right_panel = tarjeta_iphone(
             ft.Column([
-                ft.Text("Vista Previa", color=C.texto, size=20, font_family="CreatoDisplay"),
+                ft.Text("Vista Previa", color=C.texto, size=20, font_family="LetraTitulo"),
                 self.image_container, # Ahora sí, se va a estirar a lo bestia
                 ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                 self.input_nombre, 
@@ -184,7 +184,7 @@ class Image1View(ft.Container):
         # Una tarjeta del panel en la medida del bloque de antes (radio 10, y borde + padding
         # 15), que no se estira en la columna. La carpeta, un botón de atajo redondo de 40.
         return tarjeta_iphone(ft.Column([
-                ft.Text(titulo, color=C.texto, font_family="CreatoDisplay"),
+                ft.Text(titulo, color=C.texto, font_family="LetraTitulo"),
                 ft.Row([
                     path_field,
                     boton_atajo(ft.Icons.FOLDER_OPEN, None,

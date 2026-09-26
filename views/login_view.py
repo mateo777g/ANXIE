@@ -31,10 +31,10 @@ def encabezado(titulo, subtitulo):
     # misma altura: las dos líneas de arriba quedan parejas), y debajo su descripción, como
     # "Create an account" en el componente.
     return [
-        ft.Text(titulo, size=56, color=C.texto, font_family="CreatoDisplay",
+        ft.Text(titulo, size=56, color=C.texto, font_family="LetraTitulo",
                 style=ft.TextStyle(height=1.0)),
         ft.Container(height=14),
-        ft.Text(subtitulo, size=22, color=C.texto_suave, font_family="CreatoDisplayLight"),
+        ft.Text(subtitulo, size=22, color=C.texto_suave, font_family="LetraTexto"),
     ]
 
 
@@ -99,7 +99,7 @@ class LoginView(ft.Container):
                 # La frase, arriba a la izquierda como en el componente, en la letra de los títulos.
                 ft.Container(left=MARGEN, top=MARGEN_ARRIBA, content=ft.Text(
                     "Moderniza\nTu Negocio", size=56, color=ft.Colors.WHITE,
-                    font_family="CreatoDisplay", style=ft.TextStyle(height=1.0))),
+                    font_family="LetraTitulo", style=ft.TextStyle(height=1.0))),
                 ft.Container(left=MARGEN, right=MARGEN, bottom=MARGEN, content=etiqueta_marca()),
             ]))
         self.content = ft.Row([tarjeta, grano], spacing=12,
@@ -143,7 +143,7 @@ def etiqueta_marca():
     alto, radio = 48, 10   # rectángulo de esquinas suaves, como en el componente (rounded-[10px]), no píldora
     fila = ft.Row([
         ft.Image(src="assets/fragmentless-blanco.png", height=22, fit=ft.BoxFit.CONTAIN),
-        ft.Text("Fragmentless · Panel de escritorio", size=15, color=ft.Colors.WHITE, font_family="CreatoDisplay"),
+        ft.Text("Fragmentless · Panel de escritorio", size=15, color=ft.Colors.WHITE, font_family="LetraTitulo"),
     ], spacing=10, tight=True, opacity=0.85)
     # El borde, entero y parejo (el dueño no lo quiso con el brillo solo en dos esquinas, como
     # los atajos): 1 px blanco al 25 %, el border-white/25 del componente.

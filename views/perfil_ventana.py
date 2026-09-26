@@ -99,12 +99,12 @@ def _elegido():
 
 
 def _fila(texto, control):
-    # Una fila como las de Claude: la pregunta a la izquierda (Light 14, blanco) y el campo a la
+    # Una fila como las de Claude: la pregunta a la izquierda (Medium 14, blanco) y el campo a la
     # derecha, con aire arriba y abajo.
     return ft.Container(
         padding=ft.Padding(left=0, top=6, right=0, bottom=6),
         content=ft.Row([
-            ft.Text(texto, color=C.texto, size=14, font_family="CreatoDisplayLight", expand=True),
+            ft.Text(texto, color=C.texto, size=14, font_family="LetraTexto", expand=True),
             control,
         ], spacing=25, vertical_alignment=ft.CrossAxisAlignment.CENTER),
     )

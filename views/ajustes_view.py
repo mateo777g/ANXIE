@@ -26,9 +26,9 @@ CARPETAS = [
      "Carpeta donde se guardan los recibos que descargas.", ft.Icons.RECEIPT_LONG),
 ]
 
-# La ruta va en Light 14 y en una línea. Si no cabe, Flutter la corta con "…" y sale entera
+# La ruta va en Medium 14 y en una línea. Si no cabe, Flutter la corta con "…" y sale entera
 # en un globo; para saber si cabe se mide con la misma fuente.
-FUENTE_RUTA = "assets/CreatoDisplay-Light.otf"
+FUENTE_RUTA = "assets/PlusJakartaSans-Medium.ttf"
 TAM_RUTA = 14
 
 # Los temas del panel (views/tema.py), en el orden del interruptor: texto, icono y su nombre.
@@ -113,7 +113,7 @@ class AjustesView(ft.Container):
         # Etiqueta, ruta y botón caen donde la etiqueta de un contador, su número y la segunda
         # fila de atajos de Inicio.
         fila_etiqueta, _ = etiqueta(icono, "Carpeta actual")
-        texto = ft.Text(ruta, color=C.texto, size=TAM_RUTA, font_family="CreatoDisplayLight",
+        texto = ft.Text(ruta, color=C.texto, size=TAM_RUTA, font_family="LetraTexto",
                         max_lines=1, overflow=ft.TextOverflow.ELLIPSIS)
         self._poner_globo(texto)
         self.textos_ruta[clave] = texto

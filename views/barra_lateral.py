@@ -118,7 +118,7 @@ def _pie_usuario(router):
     # abre la ventana Perfil. Mide lo que una opción (ANCHO × ALTO) y el círculo va a 6 del
     # borde, concéntrico con el extremo de la píldora: su centro cae donde los iconos del menú.
     radio = DIAMETRO_AVATAR // 2
-    inicial = ft.Text(color=C.texto, size=14, font_family="CreatoDisplay")
+    inicial = ft.Text(color=C.texto, size=14, font_family="LetraTitulo")
     avatar = ft.Container(
         width=DIAMETRO_AVATAR, height=DIAMETRO_AVATAR,
         content=ft.Stack([
@@ -129,15 +129,15 @@ def _pie_usuario(router):
         ], clip_behavior=ft.ClipBehavior.NONE)
     )
     # Un nombre largo se corta con "…" y el plan no se mueve de su sitio.
-    nombre = ft.Text(color=C.texto, size=14, font_family="CreatoDisplay",
+    nombre = ft.Text(color=C.texto, size=14, font_family="LetraTitulo",
                      max_lines=1, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS,
                      expand=1, expand_loose=True)
     fila = ft.Row([
         avatar,
         ft.Row([
             nombre,
-            ft.Text("·", color=C.texto_suave, size=14, font_family="CreatoDisplayLight"),
-            ft.Text(PLAN, color=C.texto_suave, size=14, font_family="CreatoDisplayLight"),
+            ft.Text("·", color=C.texto_suave, size=14, font_family="LetraTexto"),
+            ft.Text(PLAN, color=C.texto_suave, size=14, font_family="LetraTexto"),
         ], spacing=6, expand=True),
     ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER)
 
@@ -188,8 +188,8 @@ def marca(**kwargs):
     return ft.Row([
         ft.CircleAvatar(radius=25, background_image_src="assets/fragmentless.png", bgcolor=ft.Colors.WHITE),
         ft.Column([
-            ft.Text("FRAGMENTLESS", color=C.texto, size=18, font_family="CreatoDisplay"),
-            ft.Text(f"Plan {PLAN}", color=C.texto, size=12, font_family="CreatoDisplay")
+            ft.Text("FRAGMENTLESS", color=C.texto, size=18, font_family="LetraTitulo"),
+            ft.Text(f"Plan {PLAN}", color=C.texto, size=12, font_family="LetraTitulo")
         ], spacing=0)
     ], **kwargs)
 
@@ -322,7 +322,7 @@ def _crear_titulo(texto, top):
     # algo separadas, alineado con los iconos de las opciones (su padding de 12).
     return ft.Container(
         left=12, top=top,
-        content=ft.Text(texto, color=C.texto_suave, size=11, font_family="CreatoDisplay",
+        content=ft.Text(texto, color=C.texto_suave, size=11, font_family="LetraTitulo",
                         style=ft.TextStyle(letter_spacing=1.2)),
     )
 
@@ -337,7 +337,7 @@ def _crear_opcion(texto, icono, top):
     def fila():
         return ft.Row([
             ft.Icon(icono, color=C.texto, size=20),
-            ft.Text(texto, color=C.texto, size=14, font_family="CreatoDisplayLight")
+            ft.Text(texto, color=C.texto, size=14, font_family="LetraTexto")
         ], tight=True)
 
     sale = ft.Container(content=fila(), animate_offset=CURVA)

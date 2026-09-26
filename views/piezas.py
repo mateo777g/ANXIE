@@ -29,13 +29,13 @@ def fecha_vista():
     # La fecha de arriba de cada vista ("JUEVES, 24 DE SEPTIEMBRE").
     hoy = datetime.datetime.now()
     texto = f"{DIAS[hoy.weekday()]}, {hoy.day} DE {MESES[hoy.month - 1]}"
-    return ft.Text(texto, color=C.texto, size=14, font_family="CreatoDisplayLight")
+    return ft.Text(texto, color=C.texto, size=14, font_family="LetraTexto")
 
 
 def titulo_vista(texto, tamano=40):
     # El título grande de cada vista ("Buenos días, Miguel", "Crear contenido"). Los
     # generadores lo llevan a 35, su tamaño de siempre (regla 11: nada cambia de tamaño).
-    return ft.Text(texto, size=tamano, color=C.texto, font_family="CreatoDisplay")
+    return ft.Text(texto, size=tamano, color=C.texto, font_family="LetraTitulo")
 
 
 def brillo(esquina, radio=1.0):
@@ -79,8 +79,8 @@ def anillo_brillo(esquina, radio, alto):
 def cabecera_tarjeta(titulo, subtitulo):
     # Título y subtítulo de una tarjeta, iguales en todas: el título en mayúsculas.
     return [
-        ft.Text(titulo, size=16, color=C.texto, font_family="CreatoDisplay"),
-        ft.Text(subtitulo, color=C.texto_suave, size=12, font_family="CreatoDisplayLight"),
+        ft.Text(titulo, size=16, color=C.texto, font_family="LetraTitulo"),
+        ft.Text(subtitulo, color=C.texto_suave, size=12, font_family="LetraTexto"),
         ft.Container(height=15),
     ]
 
@@ -162,14 +162,14 @@ def relevo(fila, reposo=None):
 
 
 def etiqueta(icono, texto=""):
-    # Qué es un dato, encima de él: icono 20 y texto Light 13, los dos en WHITE54, separación
+    # Qué es un dato, encima de él: icono 20 y texto Medium 13, los dos en WHITE54, separación
     # 8 (lo de dentro de un atajo, en reposo). La de los contadores de Inicio ("Cuentas
     # subidas") y la de las carpetas de Ajustes ("Carpeta actual"). Devuelve la fila y su
     # texto, por si hay que cambiarlo después.
     # Sin icono (icono=None, los contadores de Inicio desde el 26/09): solo el texto, en una
     # franja de 20 como la del icono, así el texto queda a la misma altura y lo de debajo no se
     # mueve.
-    texto = ft.Text(texto, color=C.texto_suave, size=13, font_family="CreatoDisplayLight")
+    texto = ft.Text(texto, color=C.texto_suave, size=13, font_family="LetraTexto")
     if icono is None:
         return ft.Container(height=20, alignment=ft.Alignment.CENTER_LEFT, content=texto), texto
     return ft.Row([ft.Icon(icono, color=C.texto_suave, size=20), texto], spacing=8), texto
@@ -181,7 +181,7 @@ def globo(texto, distancia=32, encima=False):
     # (debajo, como el de "Eliminar" en Mi biblioteca).
     return ft.Tooltip(
         message=texto,
-        text_style=ft.TextStyle(size=12, color=C.globo_texto, font_family="CreatoDisplayLight"),
+        text_style=ft.TextStyle(size=12, color=C.globo_texto, font_family="LetraTexto"),
         decoration=ft.BoxDecoration(bgcolor=C.globo, border_radius=ft.BorderRadius.all(12)),
         padding=ft.Padding(left=12, top=6, right=12, bottom=6),
         vertical_offset=distancia,
@@ -191,13 +191,13 @@ def globo(texto, distancia=32, encima=False):
 
 
 def fila_atajo(icono, texto=None, color=None):
-    # Lo de dentro de un botón de atajo: icono 20 y texto Light 13, separación 8. Sin texto,
+    # Lo de dentro de un botón de atajo: icono 20 y texto Medium 13, separación 8. Sin texto,
     # solo el icono (el botón redondo de "Eliminar" en Mi biblioteca). Sin `color`, el del texto
     # del tema.
     color = color or C.texto
     fila = [ft.Icon(icono, color=color, size=20)]
     if texto:
-        fila.append(ft.Text(texto, color=color, size=13, font_family="CreatoDisplayLight"))
+        fila.append(ft.Text(texto, color=color, size=13, font_family="LetraTexto"))
     return ft.Row(fila, spacing=8, tight=True)
 
 
@@ -452,7 +452,7 @@ def aviso(page, texto, abajo=40, barra=250):
     ancho = 320
     lado = max(16, ((page.width or 1264) - barra - ancho) / 2)
     page.overlay.append(ft.SnackBar(
-        ft.Row([ft.Text(texto, color=C.globo_texto, size=13, font_family="CreatoDisplayLight")],
+        ft.Row([ft.Text(texto, color=C.globo_texto, size=13, font_family="LetraTexto")],
                alignment=ft.MainAxisAlignment.CENTER),
         open=True,
         behavior=ft.SnackBarBehavior.FLOATING,
@@ -535,12 +535,12 @@ def campo(etiqueta=None, pista=None, valor="", solo_lectura=False, relleno=None,
     # escrito y deja verlo con el ojo. `tamano` es para los campos nuevos (Cuentas: 13, el
     # texto de un atajo), que llevan la pista del mismo tamaño que el texto; sin él, el campo
     # de los generadores de siempre (texto a 12 y la pista de Flutter).
-    luz = ft.TextStyle(font_family="CreatoDisplayLight", color=C.texto_suave, size=tamano)
+    luz = ft.TextStyle(font_family="LetraTexto", color=C.texto_suave, size=tamano)
     return ft.TextField(
         label=etiqueta, hint_text=pista, value=valor, read_only=solo_lectura,
         expand=expand, content_padding=relleno, text_size=tamano or 12,
         color=C.texto,
-        text_style=ft.TextStyle(font_family="CreatoDisplayLight"),
+        text_style=ft.TextStyle(font_family="LetraTexto"),
         label_style=luz, hint_style=luz,
         prefix_icon=ft.Icon(icono, color=C.texto_suave, size=20) if icono else None,
         password=contrasena, can_reveal_password=contrasena,
@@ -553,10 +553,10 @@ def campo(etiqueta=None, pista=None, valor="", solo_lectura=False, relleno=None,
 
 def opcion_radio(valor):
     # Una opción de un RadioGroup (NFA / FA de los recibos): el círculo en blanco puro la
-    # elegida y al 54 % las demás, y el texto en Light blanco. Sin rojo.
+    # elegida y al 54 % las demás, y el texto en Medium blanco. Sin rojo.
     return ft.Radio(
         value=valor, label=valor,
-        label_style=ft.TextStyle(font_family="CreatoDisplayLight", color=C.texto),
+        label_style=ft.TextStyle(font_family="LetraTexto", color=C.texto),
         fill_color={ft.ControlState.SELECTED: C.texto, ft.ControlState.DEFAULT: C.texto_suave},
         overlay_color={ft.ControlState.HOVERED: C.cara_encendida, ft.ControlState.PRESSED: C.cara_pulsada,
                        ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT},
