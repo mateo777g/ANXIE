@@ -83,7 +83,7 @@ def cabecera_tarjeta(titulo, subtitulo):
     ]
 
 
-def tarjeta_iphone(contenido, radio=16, padding=25, expand=1, **eventos):
+def tarjeta_iphone(contenido, radio=16, padding=25, expand=1, colores=None, **eventos):
     # El borde brilla en dos esquinas opuestas: un brillo arriba a la izquierda
     # (contenedor de fuera) y otro abajo a la derecha (el de en medio). Las otras dos
     # esquinas quedan sin brillo. `eventos` (on_hover, on_click...) van al contenedor de
@@ -91,6 +91,7 @@ def tarjeta_iphone(contenido, radio=16, padding=25, expand=1, **eventos):
     # `radio`, `padding` y `expand` son para los paneles de los generadores, que llevan la
     # tarjeta en la medida que ya tenían (regla 11): el borde de 1 px + `padding` deja el
     # contenido donde lo dejaba su borde de 1 + su padding.
+    # `colores`, otro degradado de relleno (la pantalla de entrar la lleva más oscura).
     return ft.Container(
         expand=expand,
         border_radius=radio,
@@ -115,7 +116,7 @@ def tarjeta_iphone(contenido, radio=16, padding=25, expand=1, **eventos):
                 gradient=ft.LinearGradient(
                     begin=ft.Alignment(-1, -1),
                     end=ft.Alignment(1, 1),
-                    colors=["#222222", "#3a3a3a"]
+                    colors=colores or ["#222222", "#3a3a3a"]
                 ),
                 border_radius=radio - 1,
                 padding=padding,
@@ -132,7 +133,7 @@ CURVA = ft.Animation(460, ft.AnimationCurve.EASE_OUT_QUINT)
 ZOOM = 1.05
 
 
-def relevo(fila):
+def relevo(fila, reposo=0.54):
     # El relevo de "Ver catálogo": la fila (icono y texto) está escrita dos veces, apiladas y
     # recortadas; al encenderse, la primera sube y la segunda entra desde abajo. `fila` es una
     # función que devuelve la fila (se llama una vez por copia). Devuelve la capa y la función
@@ -146,11 +147,11 @@ def relevo(fila):
     rodillo = ft.Container(
         content=ft.Stack([sale, entra]),
         clip_behavior=ft.ClipBehavior.HARD_EDGE,
-        opacity=0.54, animate_opacity=CURVA
+        opacity=reposo, animate_opacity=CURVA
     )
 
     def encender(dentro):
-        rodillo.opacity = 1 if dentro else 0.54
+        rodillo.opacity = 1 if dentro else reposo
         sale.offset = ft.Offset(0, -1 if dentro else 0)
         entra.offset = ft.Offset(0, 0 if dentro else 1)
 
@@ -186,12 +187,12 @@ def globo(texto, distancia=32, encima=False):
     )
 
 
-def fila_atajo(icono, texto=None):
+def fila_atajo(icono, texto=None, color=ft.Colors.WHITE):
     # Lo de dentro de un botón de atajo: icono 20 y texto Light 13, separación 8. Sin texto,
     # solo el icono (el botón redondo de "Eliminar" en Mi biblioteca).
-    fila = [ft.Icon(icono, color=ft.Colors.WHITE, size=20)]
+    fila = [ft.Icon(icono, color=color, size=20)]
     if texto:
-        fila.append(ft.Text(texto, color=ft.Colors.WHITE, size=13, font_family="CreatoDisplayLight"))
+        fila.append(ft.Text(texto, color=color, size=13, font_family="CreatoDisplayLight"))
     return ft.Row(fila, spacing=8, tight=True)
 
 
@@ -231,14 +232,14 @@ def aislar(control):
     return _Aislado(content=control, expand=control.expand)
 
 
-def boton_atajo(icono, texto, al_pulsar, ancho=None, alto=48):
+def boton_atajo(icono, texto, al_pulsar, ancho=None, alto=48, claro=False, radio=None):
     # Botón de atajo que se enciende con su propio cursor y se pulsa solo (Inicio).
     # Apagado (apagar_boton), no se enciende ni se pulsa. Todo va sin auto-update (2.3c):
     # encender y hundir hacen su update(), y cada `al_pulsar` de las vistas hace el suyo (el de
     # lo que cambia, o cambiar_vista su page.update()). Un `al_pulsar` nuevo tiene que hacerlo.
     # `boton._encender` queda a mano para quien tenga que volver a encenderlo (Mi biblioteca:
     # al borrar, el botón de debajo del cursor pasa a ser el de la imagen siguiente).
-    boton, cara, encender, hundir = boton_atajo_suelto(icono, texto, ancho, alto)
+    boton, cara, encender, hundir = boton_atajo_suelto(icono, texto, ancho, alto, claro, radio)
     cara.on_hover = sin_auto_update(lambda e: boton.disabled or encender(e.data in (True, "true")))
     cara.on_tap_down = sin_auto_update(lambda _: boton.disabled or hundir())
     cara.on_click = sin_auto_update(lambda e: boton.disabled or al_pulsar(e))
@@ -253,7 +254,7 @@ def apagar_boton(boton, apagado):
     boton.opacity = 0.4 if apagado else 1
 
 
-def boton_atajo_suelto(icono, texto, ancho=None, alto=48):
+def boton_atajo_suelto(icono, texto, ancho=None, alto=48, claro=False, radio=None):
     # El botón de atajo sin eventos: devuelve el botón, su cara y las funciones que lo
     # encienden (encender(True/False)) y lo hunden (hundir()), para que otro control (una
     # tarjeta entera, por ejemplo) decida cuándo.
@@ -266,8 +267,9 @@ def boton_atajo_suelto(icono, texto, ancho=None, alto=48):
     # botón es translúcido y el brillo se vería por toda la cara. Por eso los dos
     # anillos van debajo y la cara encima; la cara, que es la que recibe el clic y el
     # efecto al pulsar, deja ver la línea del borde a través de su blanco al 5 %.
-    # Forma de píldora: el radio es la mitad del alto, así los extremos son semicírculos.
-    radio = alto / 2
+    # Forma de píldora: el radio es la mitad del alto, así los extremos son semicírculos. Con
+    # `radio`, un rectángulo de esquinas suaves ("Entrar", con la forma del campo de encima).
+    radio = alto / 2 if radio is None else radio
     # Al pasar el cursor, el mismo relevo que "Ver catálogo" de la página web (relevo()):
     # el botón crece a 1.05, se enciende (cara al 14 %, icono y texto a blanco puro) y su
     # contenido sube y deja entrar desde abajo una copia idéntica.
@@ -275,8 +277,16 @@ def boton_atajo_suelto(icono, texto, ancho=None, alto=48):
     # Sin ink de Flet a propósito: el tema oscuro pinta al pulsar un gris al 25 % que
     # tapaba el botón entero, y el contenedor no deja cambiar ese color.
     cara_reposo, cara_encendida, cara_pulsada = "#0DFFFFFF", "#24FFFFFF", "#33FFFFFF"
+    # `claro` (26/09, "Entrar" de la pantalla de entrar, lo pidió el dueño): el mismo botón en
+    # blanco, con icono y texto en negro. Misma forma, relevo, zoom y anillos (tapados por la cara,
+    # que es opaca); la cara va del 94 % al blanco puro al encenderse y baja al 82 % al pulsar, y
+    # el contenido reposa al 85 % (al 54 %, y aun al 75 %, el negro sobre blanco se leía gris).
+    if claro:
+        cara_reposo, cara_encendida, cara_pulsada = "#F0FFFFFF", "#FFFFFFFF", "#D1FFFFFF"
+    color = ft.Colors.BLACK if claro else ft.Colors.WHITE
 
-    rodillo, encender_relevo = relevo(lambda: fila_atajo(icono, texto))
+    rodillo, encender_relevo = relevo(lambda: fila_atajo(icono, texto, color),
+                                      0.85 if claro else 0.54)
     cara = ft.Container(
         left=0, top=0, right=0, bottom=0,
         alignment=ft.Alignment.CENTER,
