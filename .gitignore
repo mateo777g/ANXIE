@@ -4,6 +4,8 @@
 venv/
 __pycache__/
 config.json
+# El temporal con el que se guarda config.json (models/perfil.py): lleva el nombre completo.
+config.json.tmp
 
 # Lo que generan los generadores: los recibos llevan el correo y la contraseña de
 # cuentas vendidas. Nunca a git (el repo es público).

@@ -5,6 +5,7 @@ import os
 import flet as ft
 from PIL import ImageFont
 
+from models import perfil
 from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
                           tarjeta_iphone, boton_atajo_suelto, etiqueta, globo, aviso,
@@ -174,13 +175,13 @@ class AjustesView(ft.Container):
     def guardar_configuracion(self, clave):
         # Guarda las dos rutas; se llama al elegir la carpeta `clave` (no hay botón "Guardar":
         # así un cambio no se pierde por salir de la vista sin guardar).
+        # Solo cambia sus dos claves: en config.json también va el perfil (models/perfil.py).
         if self.es_en_la_nube: return
         try:
-            with open(ARCHIVO_CONFIG, "w") as f:
-                json.dump({
-                    "ruta_descargas_cuentas": self.textos_ruta["cuentas"].value,
-                    "ruta_descargas_recibos": self.textos_ruta["recibos"].value
-                }, f)
+            perfil.guardar_config({
+                "ruta_descargas_cuentas": self.textos_ruta["cuentas"].value,
+                "ruta_descargas_recibos": self.textos_ruta["recibos"].value
+            })
             self.mostrar_snack(f"¡Carpeta de {clave} guardada!")
         except Exception as ex:
             self.mostrar_snack(f"Error: {ex}")

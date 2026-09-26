@@ -1,6 +1,7 @@
 import flet as ft
 import os
 
+from models import perfil
 from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
                           tarjeta_iphone, boton_atajo, etiqueta)
@@ -23,6 +24,11 @@ class HomeView(ft.Container):
         # --- BARRA LATERAL (SIDEBAR) ---
         sidebar = crear_barra_lateral(self.router, "home")
 
+        # El nombre del saludo: como eligió que lo llamen en su Perfil (models/perfil.py). Al
+        # guardarlo, la ventana Perfil lo cambia aquí también (pintores_perfil).
+        self.saludo_nombre = titulo_vista(perfil.como_llamarte())
+        self.router.pintores_perfil["saludo"] = self._pintar_saludo
+
         # --- CONTENIDO PRINCIPAL ---
         main_content = ft.Container(
             expand=True,
@@ -32,7 +38,7 @@ class HomeView(ft.Container):
                 fecha_vista(),
                 
                 # Saludo
-                ft.Row([titulo_vista("Buenos días,"), titulo_vista("Miguel")], spacing=10),
+                ft.Row([titulo_vista("Buenos días,"), self.saludo_nombre], spacing=10),
                 
                 ft.Container(height=25), # Más separación del saludo para que respire
                 
@@ -76,6 +82,13 @@ class HomeView(ft.Container):
         )
 
         self.content = ft.Row([sidebar, main_content], expand=True, spacing=0)
+
+    def _pintar_saludo(self):
+        # Solo si Inicio sigue en pantalla: si no, la próxima vez que se abra ya lo lee nuevo.
+        if self.saludo_nombre.page is None:
+            return
+        self.saludo_nombre.value = perfil.como_llamarte()
+        self.saludo_nombre.update()
 
     # --- MÉTODO DE LECTURA DE BIBLIOTECA HISTÓRICA ---
     def did_mount(self):
