@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 import flet as ft
@@ -189,13 +190,54 @@ def fila_atajo(icono, texto=None):
     return ft.Row(fila, spacing=8, tight=True)
 
 
+def sin_auto_update(manejador):
+    # Envuelve un manejador de evento que ya hace su propio update() en su trozo. Sin esto,
+    # después de CADA evento Flet compara la página ENTERA con su versión anterior para mandar
+    # lo que cambió (el "auto-update"). En Inicio (~150 controles) no se nota; en Cuentas (más
+    # de 1000) cada paso del cursor costaba ~430 ms en Python, los eventos se amontonaban y
+    # todo se movía segundos tarde, la barra lateral incluida (medido el 25/09). Solo apaga el
+    # de ese evento: Flet lo vuelve a encender en el siguiente.
+    def envuelto(*args):
+        ft.context.disable_auto_update()
+        return manejador(*args)
+    return envuelto
+
+
+class _Aislado(ft.Container):
+    # Un contenedor sin nada más que su contenido (no cambia cómo se ve lo de dentro) que Flet
+    # trata como aislado: las comparaciones de sus padres se paran en él. Y se describe con una
+    # palabra (__repr__): Flet 0.82 escribe un mensaje de depuración con TODO lo que cuelga de
+    # cada lista que compara, aunque nadie lo lea, y eso era casi todo el tiempo de un update()
+    # grande (0.85.3 ya no lo hace).
+    def is_isolated(self):
+        return True
+
+    def __repr__(self):
+        return "Aislado"
+
+
+def aislar(control):
+    # Envuelve un control para que las comparaciones de sus padres (el update() de la lista que
+    # lo lleva, el auto-update de la página) no bajen a lo de dentro. Para las piezas que se
+    # repiten cientos de veces en una lista (las tarjetas de Mi biblioteca, ~40 controles cada
+    # una): sin esto, cada update() de la lista recorría las 200 tarjetas enteras (medido el
+    # 25/09). Se usa el envoltorio en lugar del control. OJO: un cambio DENTRO solo llega con el
+    # update() de lo que cambia (o de algo que lo lleve dentro); el de la lista ya no lo manda.
+    return _Aislado(content=control, expand=control.expand)
+
+
 def boton_atajo(icono, texto, al_pulsar, ancho=None, alto=48):
     # Botón de atajo que se enciende con su propio cursor y se pulsa solo (Inicio).
-    # Apagado (apagar_boton), no se enciende ni se pulsa.
+    # Apagado (apagar_boton), no se enciende ni se pulsa. Todo va sin auto-update (2.3c):
+    # encender y hundir hacen su update(), y cada `al_pulsar` de las vistas hace el suyo (el de
+    # lo que cambia, o cambiar_vista su page.update()). Un `al_pulsar` nuevo tiene que hacerlo.
+    # `boton._encender` queda a mano para quien tenga que volver a encenderlo (Mi biblioteca:
+    # al borrar, el botón de debajo del cursor pasa a ser el de la imagen siguiente).
     boton, cara, encender, hundir = boton_atajo_suelto(icono, texto, ancho, alto)
-    cara.on_hover = lambda e: boton.disabled or encender(e.data in (True, "true"))
-    cara.on_tap_down = lambda _: boton.disabled or hundir()
-    cara.on_click = lambda e: boton.disabled or al_pulsar(e)
+    cara.on_hover = sin_auto_update(lambda e: boton.disabled or encender(e.data in (True, "true")))
+    cara.on_tap_down = sin_auto_update(lambda _: boton.disabled or hundir())
+    cara.on_click = sin_auto_update(lambda e: boton.disabled or al_pulsar(e))
+    boton._encender = encender
     return boton
 
 
@@ -353,15 +395,17 @@ def interruptor(opciones, elegida, al_cambiar):
         if e.data not in (True, "true"):
             mover(estado["elegida"], False)
 
+    # Todo sin auto-update: pintar() va con pista.update(), y al_cambiar hace el suyo (Mi
+    # biblioteca enseña la otra pestaña con su update()).
     for i, (etiqueta, _) in enumerate(etiquetas):
-        etiqueta.on_hover = al_pasar(i)
-        etiqueta.on_tap_down = al_hundir(i)
-        etiqueta.on_click = al_pulsar(i)
+        etiqueta.on_hover = sin_auto_update(al_pasar(i))
+        etiqueta.on_tap_down = sin_auto_update(al_hundir(i))
+        etiqueta.on_click = sin_auto_update(al_pulsar(i))
 
     pista = ft.Container(
         width=ancho * len(opciones) + 2 * hueco, height=alto,
         animate_scale=CURVA,
-        on_hover=al_salir,
+        on_hover=sin_auto_update(al_salir),
         content=ft.Stack([
             anillo_brillo(ft.Alignment(-1, -1), radio, alto),
             anillo_brillo(ft.Alignment(1, 1), radio, alto),
@@ -374,7 +418,7 @@ def interruptor(opciones, elegida, al_cambiar):
     return pista
 
 
-def aviso(page, texto, abajo=40):
+def aviso(page, texto, abajo=40, barra=250):
     # Los avisos de una vista ("Eliminada.", "¡Exportada con éxito!"): una píldora flotante
     # abajo, con la letra y los colores del panel, centrada sobre el contenido (a la derecha
     # de la barra lateral, que mide 250) y no sobre la ventana entera.
@@ -382,8 +426,10 @@ def aviso(page, texto, abajo=40):
     # de las vistas. En los generadores la tarjeta de la derecha baja hasta ese margen y a 40
     # la píldora tapaba medio botón "Generar"; allí va a 9, centrada en los 66 px que quedan
     # entre los botones y el borde (donde salía el aviso de antes, de lado a lado).
+    # `barra` es lo que mide la barra lateral: 0 en la pantalla de entrar, que no la lleva (así
+    # el aviso sale centrado en la ventana).
     ancho = 320
-    lado = max(16, ((page.width or 1264) - 250 - ancho) / 2)
+    lado = max(16, ((page.width or 1264) - barra - ancho) / 2)
     page.overlay.append(ft.SnackBar(
         ft.Row([ft.Text(texto, color=ft.Colors.WHITE, size=13, font_family="CreatoDisplayLight")],
                alignment=ft.MainAxisAlignment.CENTER),
@@ -391,10 +437,65 @@ def aviso(page, texto, abajo=40):
         behavior=ft.SnackBarBehavior.FLOATING,
         bgcolor="#2a2a2a",
         shape=ft.RoundedRectangleBorder(radius=24),
-        margin=ft.Margin(left=250 + lado, right=lado, bottom=abajo),
+        margin=ft.Margin(left=barra + lado, right=lado, bottom=abajo),
         padding=ft.Padding(left=20, top=15, right=20, bottom=15),
     ))
-    page.update()
+    # Solo la capa de encima (page.overlay es su lista): un page.update() comparaba la página
+    # entera por cada aviso (en Mi biblioteca con 200 imágenes, 2.4 s; medido el 25/09).
+    page._overlay.update()
+
+
+def capa_ventana(page, se_puede_cerrar=None):
+    # Las ventanitas de una vista (Cuentas: los tres puntos; después, Editar y Agregar): un velo
+    # negro al 60 % que tapa el contenido de la vista, no la barra lateral (la ventana es "de
+    # esta sección": la barra se sigue viendo y se puede usar), y encima, centrada, la tarjeta.
+    # Devuelve la capa (va en un Stack encima del contenido, a todo su tamaño) y las funciones
+    # abrir(tarjeta) y cerrar(). Se cierra pulsando el velo o con Escape (lo pone la vista).
+    # Entra como un atajo al encenderse: el velo aparece en 200 ms y la tarjeta crece de 0.97 a
+    # 1 con la curva de los atajos; sale al revés.
+    # `se_puede_cerrar` (opcional) dice si ahora se puede cerrar: Editar y Agregar no se cierran
+    # con el velo ni con Escape mientras suben la foto y guardan (se perdería qué pasó).
+    envoltura = ft.Container(scale=0.97, animate_scale=CURVA)
+    capa = ft.Container(
+        left=0, top=0, right=0, bottom=0, visible=False, opacity=0,
+        bgcolor="#99000000", padding=40, alignment=ft.Alignment.CENTER,
+        animate_opacity=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
+        content=envoltura,
+    )
+    estado = {"vez": 0}
+
+    def abrir(tarjeta):
+        # La tarjeta recibe su propio clic (sin hacer nada) para que un clic dentro de ella no
+        # llegue al velo y la cierre.
+        if tarjeta.on_click is None:
+            tarjeta.on_click = sin_auto_update(lambda _: None)
+        estado["vez"] += 1
+        envoltura.content = tarjeta
+        envoltura.scale = 0.97
+        capa.visible, capa.opacity = True, 0
+        capa.update()
+        envoltura.scale, capa.opacity = 1, 1
+        capa.update()
+
+    def cerrar():
+        if not capa.visible or (se_puede_cerrar and not se_puede_cerrar()):
+            return
+        estado["vez"] += 1
+        vez = estado["vez"]
+        envoltura.scale, capa.opacity = 0.97, 0
+        capa.update()
+
+        async def quitar():
+            # Al acabar el fundido se quita del todo: transparente seguiría tapando los clics.
+            await asyncio.sleep(0.22)
+            if estado["vez"] == vez:
+                capa.visible = False
+                envoltura.content = None
+                capa.update()
+        page.run_task(quitar)
+
+    capa.on_click = sin_auto_update(lambda _: cerrar())
+    return capa, abrir, cerrar
 
 
 # Los campos de los generadores (rutas, textos, nombre de la descarga). Un pozo: más oscuro que
@@ -407,14 +508,23 @@ FONDO_CAMPO = "#33000000"
 BORDE_CAMPO = "#1FFFFFFF"
 
 
-def campo(etiqueta=None, pista=None, valor="", solo_lectura=False, relleno=None, expand=True):
-    luz = ft.TextStyle(font_family="CreatoDisplayLight", color=ft.Colors.WHITE54)
+def campo(etiqueta=None, pista=None, valor="", solo_lectura=False, relleno=None, expand=True,
+          icono=None, contrasena=False, tamano=None, al_cambiar=None, al_enviar=None,
+          autofoco=False):
+    # `icono` va a la izquierda, en WHITE54 y de 20 (el de una etiqueta); `contrasena` tapa lo
+    # escrito y deja verlo con el ojo. `tamano` es para los campos nuevos (Cuentas: 13, el
+    # texto de un atajo), que llevan la pista del mismo tamaño que el texto; sin él, el campo
+    # de los generadores de siempre (texto a 12 y la pista de Flutter).
+    luz = ft.TextStyle(font_family="CreatoDisplayLight", color=ft.Colors.WHITE54, size=tamano)
     return ft.TextField(
         label=etiqueta, hint_text=pista, value=valor, read_only=solo_lectura,
-        expand=expand, content_padding=relleno, text_size=12,
+        expand=expand, content_padding=relleno, text_size=tamano or 12,
         color=ft.Colors.WHITE,
         text_style=ft.TextStyle(font_family="CreatoDisplayLight"),
         label_style=luz, hint_style=luz,
+        prefix_icon=ft.Icon(icono, color=ft.Colors.WHITE54, size=20) if icono else None,
+        password=contrasena, can_reveal_password=contrasena,
+        on_change=al_cambiar, on_submit=al_enviar, autofocus=autofoco,
         bgcolor=FONDO_CAMPO, border_color=BORDE_CAMPO,
         focused_border_color=ft.Colors.WHITE54, focused_border_width=1, border_radius=10,
         cursor_color=ft.Colors.WHITE, selection_color=ft.Colors.WHITE24,

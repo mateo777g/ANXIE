@@ -7,7 +7,8 @@ from PIL import ImageFont
 
 from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
-                          tarjeta_iphone, boton_atajo_suelto, etiqueta, globo, aviso)
+                          tarjeta_iphone, boton_atajo_suelto, etiqueta, globo, aviso,
+                          sin_auto_update)
 
 ARCHIVO_CONFIG = "config.json"
 
@@ -74,12 +75,14 @@ class AjustesView(ft.Container):
     def did_mount(self):
         self.page_ref = self.router.page
         # Al cambiar el ancho de la ventana, una ruta larga puede dejar de caber (o volver a
-        # caber) en su tarjeta: su globo sale o se va.
-        self.page_ref.on_resize = self._al_cambiar_tamano
+        # caber) en su tarjeta: su globo sale o se va. Sin auto-update: llega un evento por píxel
+        # al arrastrar el borde, y _al_cambiar_tamano hace su update() solo si algo cambia.
+        self._al_redimensionar = sin_auto_update(self._al_cambiar_tamano)
+        self.page_ref.on_resize = self._al_redimensionar
         self.page_ref.update()
 
     def will_unmount(self):
-        if self.page_ref.on_resize == self._al_cambiar_tamano:
+        if self.page_ref.on_resize == self._al_redimensionar:
             self.page_ref.on_resize = None
 
     def _al_cambiar_tamano(self, e):
@@ -120,11 +123,13 @@ class AjustesView(ft.Container):
             encender(True)
             self.seleccionar_carpeta_tk(clave)
 
+        # Sin auto-update: encender y hundir hacen su update(); elegir la carpeta, el de la ruta
+        # (_pintar_ruta) y el del aviso.
         return tarjeta_iphone(
             contenido,
-            on_hover=lambda e: encender(e.data in (True, "true")),
-            on_tap_down=lambda _: hundir(),
-            on_click=al_pulsar
+            on_hover=sin_auto_update(lambda e: encender(e.data in (True, "true"))),
+            on_tap_down=sin_auto_update(lambda _: hundir()),
+            on_click=sin_auto_update(al_pulsar)
         )
 
     def _poner_globo(self, texto):

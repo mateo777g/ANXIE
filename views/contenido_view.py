@@ -2,7 +2,7 @@ import flet as ft
 
 from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
-                          tarjeta_iphone, boton_atajo_suelto)
+                          tarjeta_iphone, boton_atajo_suelto, sin_auto_update)
 
 # Las cuatro tareas: título, subtítulo, icono (el mismo que su botón de atajo en Inicio) y la
 # ruta de MainController.cambiar_vista a la que lleva.
@@ -63,9 +63,10 @@ class ContenidoView(ft.Container):
         if bloqueado:
             # Hoy no hay ninguna bloqueada: apagada y sin eventos.
             return ft.Container(expand=1, opacity=0.4, content=tarjeta_iphone(contenido))
+        # Sin auto-update: encender y hundir hacen su update(), y cambiar_vista su page.update().
         return tarjeta_iphone(
             contenido,
-            on_hover=lambda e: encender(e.data in (True, "true")),
-            on_tap_down=lambda _: hundir(),
-            on_click=lambda _: self.router.cambiar_vista(ruta)
+            on_hover=sin_auto_update(lambda e: encender(e.data in (True, "true"))),
+            on_tap_down=sin_auto_update(lambda _: hundir()),
+            on_click=sin_auto_update(lambda _: self.router.cambiar_vista(ruta))
         )

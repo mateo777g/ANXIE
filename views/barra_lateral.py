@@ -1,6 +1,6 @@
 import flet as ft
 
-from views.piezas import anillo_brillo
+from views.piezas import anillo_brillo, sin_auto_update
 
 # --- BARRA LATERAL ---
 # Una sola para todas las vistas: cada una la pide con crear_barra_lateral(router, sección),
@@ -11,11 +11,14 @@ from views.piezas import anillo_brillo
 # de una opción se desliza hasta ella y se enciende como un atajo (zoom, cara más clara, texto
 # en blanco y el relevo del texto), y al salir el cursor del menú vuelve apagada a la activa.
 
-# Las cuatro opciones del menú: texto, icono y ruta de MainController.cambiar_vista.
+# Las opciones del menú: texto, icono y ruta de MainController.cambiar_vista. "Cuentas" (el
+# inventario de la tienda, fase 2) entró el 24/09 justo encima de Ajustes: las demás siguen en
+# su sitio, que el cliente ya se sabe.
 SECCIONES = [
     ("Inicio", ft.Icons.HOME, "home"),
     ("Crear contenido", ft.Icons.AUTO_AWESOME_OUTLINED, "contenido"),
     ("Mi biblioteca", ft.Icons.INBOX, "biblioteca"),
+    ("Cuentas", ft.Icons.STOREFRONT, "cuentas"),
     ("Ajustes", ft.Icons.SETTINGS, "ajustes"),
 ]
 
@@ -42,19 +45,24 @@ def crear_barra_lateral(router, activa):
         padding=ft.Padding(left=20, top=20, right=19, bottom=20),
         content=ft.Column([
             # Logo y Título
-            ft.Row([
-                ft.CircleAvatar(radius=25, background_image_src="assets/fragmentless.png", bgcolor=ft.Colors.WHITE),
-                ft.Column([
-                    ft.Text("FRAGMENTLESS", color=ft.Colors.WHITE, size=18, font_family="CreatoDisplay"),
-                    ft.Text("PANEL", color=ft.Colors.WHITE, size=10, font_family="CreatoDisplay")
-                ], spacing=0)
-            ]),
+            marca(),
             ft.Divider(height=40, color=ft.Colors.WHITE24),
 
             # Menú de navegación
             _crear_menu(router, activa),
         ], spacing=10)
     )
+
+
+def marca(**kwargs):
+    # El logo y la marca: arriba de la barra y en la pantalla de entrar (una pieza, regla 9).
+    return ft.Row([
+        ft.CircleAvatar(radius=25, background_image_src="assets/fragmentless.png", bgcolor=ft.Colors.WHITE),
+        ft.Column([
+            ft.Text("FRAGMENTLESS", color=ft.Colors.WHITE, size=18, font_family="CreatoDisplay"),
+            ft.Text("PANEL", color=ft.Colors.WHITE, size=10, font_family="CreatoDisplay")
+        ], spacing=0)
+    ], **kwargs)
 
 
 def _crear_menu(router, activa):
@@ -119,13 +127,15 @@ def _crear_menu(router, activa):
         if e.data not in (True, "true"):
             mover(indice_activo, False)
 
+    # Todo sin auto-update (sin_auto_update, en piezas.py): mover() hace menu.update() y
+    # cambiar_vista() su page.update(); si no, cada paso del cursor comparaba la página entera.
     for i, ((opcion, _), (_, _, ruta)) in enumerate(zip(opciones, SECCIONES)):
-        opcion.on_hover = al_pasar(i)
-        opcion.on_click = al_pulsar(ruta)
+        opcion.on_hover = sin_auto_update(al_pasar(i))
+        opcion.on_click = sin_auto_update(al_pulsar(ruta))
 
     pintar()
     menu = ft.Container(
-        on_hover=al_salir_del_menu,
+        on_hover=sin_auto_update(al_salir_del_menu),
         # Alto fijo: un Stack con todo posicionado no sabe medirse dentro de una Column.
         # Sin recorte (por defecto un Stack recorta): se comería la holgura de los anillos
         # y el zoom de la píldora.

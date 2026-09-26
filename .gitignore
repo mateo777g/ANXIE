@@ -1,4 +1,6 @@
+# Las llaves del panel (Supabase y, más adelante, R2): nunca a git, el repo es público.
 .env
+.env.*
 venv/
 __pycache__/
 config.json
@@ -7,9 +9,11 @@ config.json
 # cuentas vendidas. Nunca a git (el repo es público).
 biblioteca/
 
-# Lo que genera "flet pack" al hacer el .exe: se rehace en cada build.
+# Lo que genera "flet pack" al hacer el .exe: se rehace en cada build. El .exe, además,
+# va con su .env al lado: ni el uno ni el otro pueden acabar en el repo.
 build/
 dist/
+*.exe
 *.spec
 *.ico
 
