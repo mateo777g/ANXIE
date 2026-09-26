@@ -73,17 +73,21 @@ def crear_barra_lateral(router, activa):
         border=ft.Border(right=ft.BorderSide(1, BORDE)),
         # Sin padding a los lados aquí: lo lleva cada parte (_con_margen), para que la raya del
         # pie pueda ir de lado a lado.
-        # Abajo 14 y no 20: el pie es un botón de 44 con el círculo dentro a 6 del borde, así el
-        # círculo sigue a 20 del fondo, donde estaba.
-        padding=ft.Padding(left=0, top=20, right=0, bottom=14),
+        # Los dos recuadros (logo y pie) llevan su contenido centrado de alto (el dueño, 26/09:
+        # "están un poco hacia arriba"). Arriba 25: el logo (50) queda a 25 del borde y a 25 de
+        # su raya, que no se movió. Abajo 20: el pie es un botón de 44, así el círculo (a 6 dentro)
+        # queda a 26 del fondo y a 26 de su raya (con 14 eran 20 y 26).
+        padding=ft.Padding(left=0, top=25, right=0, bottom=20),
         content=ft.Column([
             # Logo y Título. Las dos rayas de la barra (esta y la del pie) van cerradas: del
             # borde izquierdo hasta la línea del derecho, juntas con ella (el dueño, 26/09).
             _con_margen(marca()),
-            ft.Divider(height=40, color=ft.Colors.WHITE24),
+            # 30 de alto (era 40, con 20 arriba): la raya queda a 25 del logo y en su sitio. El
+            # menú lleva 5 de más encima para no moverse: sigue a 25 de la raya.
+            ft.Divider(height=30, color=ft.Colors.WHITE24),
 
             # Menú de navegación
-            _con_margen(_crear_menu(router, SECCIONES, activa, encendida)),
+            _con_margen(_crear_menu(router, SECCIONES, activa, encendida), arriba=5),
 
             # Hasta abajo, Ajustes y Cerrar sesión y luego quién usa el panel: el hueco empuja
             # todo al fondo de la barra, y la raya es la de debajo del logo.
@@ -95,10 +99,10 @@ def crear_barra_lateral(router, activa):
     )
 
 
-def _con_margen(contenido):
+def _con_margen(contenido, arriba=0):
     # El margen de la barra: 20 por lado (19 a la derecha, porque el borde de 1 cuenta como
     # padding), así lo de dentro sigue midiendo 210.
-    return ft.Container(padding=ft.Padding(left=20, top=0, right=19, bottom=0), content=contenido)
+    return ft.Container(padding=ft.Padding(left=20, top=arriba, right=19, bottom=0), content=contenido)
 
 
 DIAMETRO_AVATAR = 32

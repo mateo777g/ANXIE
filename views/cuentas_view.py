@@ -75,6 +75,11 @@ class CuentasView(ft.Container):
         self.rayas = {}            # id de la cuenta → la raya de encima de su fila
         self.hechas = 0            # cuántas de self.cuentas tienen ya su fila (llegan por tandas)
         self.lista = None          # la lista de filas de la tabla (ver _pintar_tabla)
+        # Se llega por el atajo "Agregar Cuenta" de Inicio: la ventana de Agregar se abre
+        # sola en cuanto están las cuentas (_cargar). Se lee y se borra aquí, así no vuelve a
+        # abrirse al entrar otra vez por el menú.
+        self.abrir_agregar = getattr(router, "abrir_agregar_cuenta", False)
+        router.abrir_agregar_cuenta = False
 
         # --- CABECERA ---
         # La de Inicio: fecha, título y un hueco de 25. El título es el contador ("12 cuentas en
@@ -191,6 +196,9 @@ class CuentasView(ft.Container):
         self.boton_agregar.visible = True
         self.fila_buscador.visible = True
         self._pintar_tabla()
+        if self.abrir_agregar:
+            self.abrir_agregar = False
+            self._abrir_formulario(None)
         # Fotos viejas que no se pudieron borrar de R2 otra vez (al editar con foto nueva): se
         # reintentan callando, detrás (si sigue sin poder, siguen apuntadas).
         self.page_ref.run_task(self._reintentar_fotos)

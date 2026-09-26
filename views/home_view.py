@@ -17,9 +17,10 @@ class HomeView(ft.Container):
         self.padding = 0
 
         # --- CONTADORES ---
-        # Cada uno con el icono de su botón de atajo, para que se sepa cuál es cuál.
-        contador_cuentas, self.numero_cuentas, self.etiqueta_cuentas = self._crear_contador(ft.Icons.IMAGE)
-        contador_recibos, self.numero_recibos, self.etiqueta_recibos = self._crear_contador(ft.Icons.RECEIPT_LONG)
+        # Sin icono (el dueño, 26/09: los atajos de al lado ya llevan los suyos y tantos iconos
+        # saturaban la vista); el texto de la etiqueta ya dice cuál es cuál.
+        contador_cuentas, self.numero_cuentas, self.etiqueta_cuentas = self._crear_contador()
+        contador_recibos, self.numero_recibos, self.etiqueta_recibos = self._crear_contador()
 
         # --- BARRA LATERAL (SIDEBAR) ---
         sidebar = crear_barra_lateral(self.router, "home")
@@ -57,10 +58,14 @@ class HomeView(ft.Container):
                                 self._atajo(ft.Icons.RECEIPT_LONG, "Imagen Recibos", "recibo")
                             ], spacing=12),
 
-                            # 🔥 SEGUNDA FILA DE BOTONES (Los Nuevos Pequeños) 🔥
+                            # SEGUNDA FILA: las cuentas de la tienda (el dueño, 26/09; antes
+                            # Cuenta Pequeña y Recibo Pequeño, que siguen en Crear contenido).
+                            # "Agregar Cuenta" lleva a Cuentas con la ventana de Agregar
+                            # abierta; "Administrar Cuentas", a Cuentas tal cual.
                             ft.Row([
-                                self._atajo(ft.Icons.IMAGE_ASPECT_RATIO, "Cuenta Pequeña", "cuenta_pequena"),
-                                self._atajo(ft.Icons.RECEIPT, "Recibo Pequeño", "recibo_pequeno")
+                                boton_atajo(ft.Icons.INVENTORY_OUTLINED, "Agregar Cuenta",
+                                            lambda _: self._agregar_cuenta()),
+                                self._atajo(ft.Icons.VIEW_LIST_OUTLINED, "Administrar Cuentas", "cuentas")
                             ], spacing=12)
 
                         ])),
@@ -118,9 +123,9 @@ class HomeView(ft.Container):
         self.etiqueta_recibos.value = "Cuenta vendida" if total_recibos == 1 else "Cuentas vendidas"
         self.update()
 
-    def _crear_contador(self, icono):
+    def _crear_contador(self):
         # Contador de "CONTENIDO GENERADO", hecho sobre el reloj del iPhone: arriba qué se
-        # cuenta (icono y texto como los de un botón de atajo) y debajo el número en grande,
+        # cuenta (el texto de un botón de atajo, sin icono) y debajo el número en grande,
         # en Coolvetica y en el gris de las cifras del reloj. Ocupa la misma franja que los
         # botones de al lado: la etiqueta arranca a la altura de la primera fila y la línea
         # base del número cae donde acaba la segunda.
@@ -134,12 +139,17 @@ class HomeView(ft.Container):
         # archivo de la fuente: Flutter le suma parte del interlineado).
         numero = ft.Text("0", color="#909090", size=tam, font_family="Coolvetica",
                          left=0, bottom=-round(tam * 0.348))
-        fila_etiqueta, texto_etiqueta = etiqueta(icono)
+        fila_etiqueta, texto_etiqueta = etiqueta(None)
         contador = ft.Container(expand=1, content=ft.Column([
             fila_etiqueta,
             ft.Stack([numero], height=franja - 20, clip_behavior=ft.ClipBehavior.NONE)
         ], spacing=0))
         return contador, numero, texto_etiqueta
+
+    def _agregar_cuenta(self):
+        # Cuentas la mira al crearse (y la borra): abre Agregar en cuanto tiene las cuentas.
+        self.router.abrir_agregar_cuenta = True
+        self.router.cambiar_vista("cuentas")
 
     def _atajo(self, icono, texto, ruta):
         # Botón de la tarjeta de atajos (views/piezas.py): lleva a su vista.

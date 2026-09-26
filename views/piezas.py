@@ -162,7 +162,12 @@ def etiqueta(icono, texto=""):
     # 8 (lo de dentro de un atajo, en reposo). La de los contadores de Inicio ("Cuentas
     # subidas") y la de las carpetas de Ajustes ("Carpeta actual"). Devuelve la fila y su
     # texto, por si hay que cambiarlo después.
+    # Sin icono (icono=None, los contadores de Inicio desde el 26/09): solo el texto, en una
+    # franja de 20 como la del icono, así el texto queda a la misma altura y lo de debajo no se
+    # mueve.
     texto = ft.Text(texto, color=ft.Colors.WHITE54, size=13, font_family="CreatoDisplayLight")
+    if icono is None:
+        return ft.Container(height=20, alignment=ft.Alignment.CENTER_LEFT, content=texto), texto
     return ft.Row([ft.Icon(icono, color=ft.Colors.WHITE54, size=20), texto], spacing=8), texto
 
 
