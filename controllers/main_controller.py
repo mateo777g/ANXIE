@@ -1,3 +1,4 @@
+import os
 import flet as ft
 from models import sesion
 from views.home_view import HomeView
@@ -18,7 +19,13 @@ from views.recibomini_view import ReciboPequenoView
 class MainController:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.page.title = "Anxie Store - Panel"
+        self.page.title = "Fragmentless - Panel"
+        # El logo en la barra de título y en la barra de tareas de Windows (Flet solo acepta .ico
+        # y con ruta absoluta). assets/icono.ico es fragmentless.png entero, cuadrado con las esquinas
+        # suaves (lo pidió el dueño); *.ico no va a git, así que sin él la ventana se queda con el de Flet.
+        icono = os.path.abspath("assets/icono.ico")
+        if os.path.exists(icono):
+            self.page.window.icon = icono
         # El tema que quedó elegido en Ajustes (config.json; el oscuro si no hay). Antes de crear
         # ninguna vista: cada una lee sus colores al construirse (views/tema.py).
         tema.cargar()
