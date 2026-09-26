@@ -3,6 +3,7 @@ import asyncio
 import flet as ft
 
 from models import perfil, sesion
+from models.entorno import recurso
 from views.perfil_ventana import abrir_perfil
 from views.piezas import anillo_brillo, sin_auto_update
 from views.tema import C
@@ -186,7 +187,7 @@ def _pie_usuario(router):
 def marca(**kwargs):
     # El logo y la marca: arriba de la barra y en la pantalla de entrar (una pieza, regla 9).
     return ft.Row([
-        ft.CircleAvatar(radius=25, background_image_src="assets/fragmentless.png", bgcolor=ft.Colors.WHITE),
+        ft.CircleAvatar(radius=25, background_image_src=recurso("assets/fragmentless.png"), bgcolor=ft.Colors.WHITE),
         ft.Column([
             ft.Text("FRAGMENTLESS", color=C.texto, size=18, font_family="LetraTitulo"),
             ft.Text(f"Plan {PLAN}", color=C.texto, size=12, font_family="LetraTitulo")

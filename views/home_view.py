@@ -1,3 +1,4 @@
+import datetime
 import flet as ft
 import os
 
@@ -40,7 +41,7 @@ class HomeView(ft.Container):
                 fecha_vista(),
                 
                 # Saludo
-                ft.Row([titulo_vista("Buenos días,"), self.saludo_nombre], spacing=10),
+                ft.Row([titulo_vista(_saludo()), self.saludo_nombre], spacing=10),
                 
                 ft.Container(height=25), # Más separación del saludo para que respire
                 
@@ -155,3 +156,14 @@ class HomeView(ft.Container):
     def _atajo(self, icono, texto, ruta):
         # Botón de la tarjeta de atajos (views/piezas.py): lleva a su vista.
         return boton_atajo(icono, texto, lambda _: self.router.cambiar_vista(ruta))
+
+
+def _saludo(hora=None):
+    # Según la hora de la PC al abrir Inicio (el dueño, 26/09: "sí, que cambie según la hora";
+    # antes decía siempre "Buenos días"): días de 5 a 12, tardes de 12 a 19, noches el resto.
+    hora = datetime.datetime.now().hour if hora is None else hora
+    if 5 <= hora < 12:
+        return "Buenos días,"
+    if 12 <= hora < 19:
+        return "Buenas tardes,"
+    return "Buenas noches,"

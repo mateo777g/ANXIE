@@ -3,7 +3,7 @@ import asyncio
 import flet as ft
 
 from models import sesion
-from models.entorno import leer
+from models.entorno import leer, recurso
 from views.piezas import (tarjeta_iphone, boton_atajo,
                           apagar_boton, campo, aviso, sin_auto_update)
 from views.tema import C
@@ -94,7 +94,7 @@ class LoginView(ft.Container):
             expand=106, border_radius=RADIO, bgcolor="#000000", border=ft.Border.all(1, "#1FFFFFFF"),
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
             content=ft.Stack([
-                ft.Image(src="assets/login-grano.webp", fit=ft.BoxFit.COVER,
+                ft.Image(src=recurso("assets/login-grano.webp"), fit=ft.BoxFit.COVER,
                          width=float("inf"), height=float("inf")),
                 # La frase, arriba a la izquierda como en el componente, en la letra de los títulos.
                 ft.Container(left=MARGEN, top=MARGEN_ARRIBA, content=ft.Text(
@@ -142,7 +142,7 @@ def etiqueta_marca():
     # como en el componente. No se pulsa: es una etiqueta.
     alto, radio = 48, 10   # rectángulo de esquinas suaves, como en el componente (rounded-[10px]), no píldora
     fila = ft.Row([
-        ft.Image(src="assets/fragmentless-blanco.png", height=22, fit=ft.BoxFit.CONTAIN),
+        ft.Image(src=recurso("assets/fragmentless-blanco.png"), height=22, fit=ft.BoxFit.CONTAIN),
         ft.Text("Fragmentless · Panel de escritorio", size=15, color=ft.Colors.WHITE, font_family="LetraTitulo"),
     ], spacing=10, tight=True, opacity=0.85)
     # El borde, entero y parejo (el dueño no lo quiso con el brillo solo en dos esquinas, como

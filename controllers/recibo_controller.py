@@ -3,6 +3,7 @@ import os
 import datetime
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from models.entorno import recurso
 
 
 
@@ -218,8 +219,8 @@ class ReciboController:
         if not fecha or fecha.strip() == "":
             fecha = datetime.datetime.now().strftime("%d/%m/%Y")
 
-        FONDO_PATH = os.path.join("assets", "plantillarecibo.jpg")
-        FUENTE_PATH = os.path.join("assets", "FORTNITE.OTF")
+        FONDO_PATH = recurso(os.path.join("assets", "plantillarecibo.jpg"))
+        FUENTE_PATH = recurso(os.path.join("assets", "FORTNITE.OTF"))
 
         # RESOLUCIÓN 4K VERTICAL
         W, H = 2160, 3840

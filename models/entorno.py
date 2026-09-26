@@ -17,13 +17,26 @@ from dotenv import load_dotenv
 
 # Empaquetado con flet pack (PyInstaller), __file__ vive en una carpeta temporal que se borra
 # al cerrar: la carpeta de verdad es la del .exe.
-if getattr(sys, "frozen", False):
+EMPAQUETADO = getattr(sys, "frozen", False)
+if EMPAQUETADO:
     CARPETA_PANEL = Path(sys.executable).resolve().parent
 else:
     CARPETA_PANEL = Path(__file__).resolve().parent.parent
 
 RUTA_ENV = CARPETA_PANEL / ".env"
 load_dotenv(RUTA_ENV)
+
+
+def recurso(ruta):
+    # Dónde está de verdad un archivo de assets/ ("assets/fondo.png"). El .exe es de un solo
+    # archivo (el dueño, 26/09): los assets viajan DENTRO y PyInstaller los saca en cada arranque
+    # a una carpeta temporal (sys._MEIPASS), mientras que biblioteca/, config.json y el .env viven
+    # al lado del .exe (main.py se para ahí). Así que en el .exe, ruta absoluta a esa carpeta
+    # temporal (Flet acepta rutas absolutas en src y en page.fonts); con Python, la misma ruta
+    # relativa de siempre, sin cambiar nada.
+    if EMPAQUETADO:
+        return os.path.join(sys._MEIPASS, ruta)
+    return ruta
 
 
 def leer(clave):

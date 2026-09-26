@@ -7,6 +7,7 @@ import flet as ft
 from PIL import ImageFont
 
 from models import perfil
+from models.entorno import recurso
 from views import tema
 from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
@@ -28,7 +29,7 @@ CARPETAS = [
 
 # La ruta va en Medium 14 y en una línea. Si no cabe, Flutter la corta con "…" y sale entera
 # en un globo; para saber si cabe se mide con la misma fuente.
-FUENTE_RUTA = "assets/PlusJakartaSans-Medium.ttf"
+FUENTE_RUTA = recurso("assets/PlusJakartaSans-Medium.ttf")
 TAM_RUTA = 14
 
 # Los temas del panel (views/tema.py), en el orden del interruptor: texto, icono y su nombre.

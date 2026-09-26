@@ -1,5 +1,6 @@
 import os
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from models.entorno import recurso
 
 class ImgMiniController:
 
@@ -108,8 +109,8 @@ class ImgMiniController:
 
     @staticmethod
     def generar_miniatura(img_picos, img_skins, img_emotes, txt_picos, txt_skins, txt_emotes, ruta_salida):
-        FONDO_PATH = os.path.join("assets", "fondo.png")
-        FUENTE_PATH = os.path.join("assets", "FORTNITE.OTF")
+        FONDO_PATH = recurso(os.path.join("assets", "fondo.png"))
+        FUENTE_PATH = recurso(os.path.join("assets", "FORTNITE.OTF"))
 
         W, H = 3840, 2160
         fondo = Image.open(FONDO_PATH).convert("RGBA").resize((W, H))

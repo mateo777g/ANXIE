@@ -1,6 +1,7 @@
 import os
 import flet as ft
 from models import sesion
+from models.entorno import recurso
 from views.home_view import HomeView
 from views.image1_view import Image1View
 from views.contenido_view import ContenidoView
@@ -23,7 +24,7 @@ class MainController:
         # El logo en la barra de título y en la barra de tareas de Windows (Flet solo acepta .ico
         # y con ruta absoluta). assets/icono.ico es fragmentless.png entero, cuadrado con las esquinas
         # suaves (lo pidió el dueño); *.ico no va a git, así que sin él la ventana se queda con el de Flet.
-        icono = os.path.abspath("assets/icono.ico")
+        icono = os.path.abspath(recurso("assets/icono.ico"))
         if os.path.exists(icono):
             self.page.window.icon = icono
         # El tema que quedó elegido en Ajustes (config.json; el oscuro si no hay). Antes de crear
@@ -37,10 +38,10 @@ class MainController:
         fuentes = dict(getattr(self.page, "fonts", {}) or {})
         # Plus Jakarta Sans, la de la página web (26/09, la eligió el dueño): títulos en Bold y el
         # resto en Medium (a su cliente la Creato Display Regular / Light le parecía muy delgada).
-        fuentes["LetraTitulo"] = "assets/PlusJakartaSans-Bold.ttf"
-        fuentes["LetraTexto"] = "assets/PlusJakartaSans-Medium.ttf"
+        fuentes["LetraTitulo"] = recurso("assets/PlusJakartaSans-Bold.ttf")
+        fuentes["LetraTexto"] = recurso("assets/PlusJakartaSans-Medium.ttf")
         # Coolvetica (condensada), solo para los números de los contadores de Inicio.
-        fuentes["Coolvetica"] = "assets/Coolvetica Rg Cram.otf"
+        fuentes["Coolvetica"] = recurso("assets/Coolvetica Rg Cram.otf")
         self.page.fonts = fuentes
         
         # Eventos de la ventana que llegan aunque nadie los escuche (el tema de Windows, cuando la
