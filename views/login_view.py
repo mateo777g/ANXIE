@@ -6,6 +6,7 @@ from models import sesion
 from models.entorno import leer
 from views.piezas import (tarjeta_iphone, boton_atajo,
                           apagar_boton, campo, aviso, sin_auto_update)
+from views.tema import C
 
 # --- ENTRAR ---
 # La pantalla de entrada del panel (fase 2, 24/09): lo que se ve al abrirlo si no hay una sesión
@@ -30,10 +31,10 @@ def encabezado(titulo, subtitulo):
     # misma altura: las dos líneas de arriba quedan parejas), y debajo su descripción, como
     # "Create an account" en el componente.
     return [
-        ft.Text(titulo, size=56, color=ft.Colors.WHITE, font_family="CreatoDisplay",
+        ft.Text(titulo, size=56, color=C.texto, font_family="CreatoDisplay",
                 style=ft.TextStyle(height=1.0)),
         ft.Container(height=14),
-        ft.Text(subtitulo, size=22, color=ft.Colors.WHITE54, font_family="CreatoDisplayLight"),
+        ft.Text(subtitulo, size=22, color=C.texto_suave, font_family="CreatoDisplayLight"),
     ]
 
 
@@ -46,8 +47,8 @@ class LoginView(ft.Container):
         self.destino = destino        # a dónde ir al entrar: Inicio, o la vista de donde se vino
         self.expand = True
         # Negro liso, sin fondo_pagina(): la única vista sin el degradado (26/09, excepción que
-        # pidió el dueño para que solo brillen las manchas).
-        self.bgcolor = "#000000"
+        # pidió el dueño para que solo brillen las manchas). En el tema claro, gris muy claro.
+        self.bgcolor = C.fondo_entrar
         self.padding = 12
 
         configurado = all(leer(clave) for clave in ("SUPABASE_URL", "SUPABASE_ANON_KEY", "ADMIN_EMAIL"))
@@ -82,7 +83,8 @@ class LoginView(ft.Container):
             ft.Column(partes, spacing=0), radio=RADIO, expand=94,
             # Más oscura que las de Inicio (lo pidió el dueño): del #0a0a0a de su muestra a un gris
             # algo más claro abajo a la derecha, el mismo sentido del degradado.
-            colores=["#0a0a0a", "#1c1c1c"],
+            # En el tema claro, al revés: más blanca que las de Inicio.
+            colores=C.tarjeta_entrar,
             padding=ft.Padding(left=MARGEN - 1, top=MARGEN_ARRIBA - 1, right=MARGEN - 1, bottom=MARGEN - 1))
 
         # A la derecha, las dos manchas azules con grano (26/09, lo pidió el dueño a partir de un

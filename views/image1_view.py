@@ -3,6 +3,7 @@ import flet as ft
 from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, tarjeta_iphone, boton_atajo,
                           apagar_boton, campo, hueco_imagen, aviso)
+from views.tema import C
 from controllers.app_controller import AppController
 
 # El diseño del panel encima de lo que ya había, sin mover nada (regla 11 de DISENO.md): cada
@@ -14,7 +15,7 @@ class Image1View(ft.Container):
         self.router = router
         self.page_ref = router.page 
         self.expand = True
-        self.bgcolor = "#0e0e0e"
+        self.bgcolor = C.fondo
         self.gradient = fondo_pagina()
         self.padding = 0
 
@@ -34,7 +35,7 @@ class Image1View(ft.Container):
         self.input_nombre = campo(etiqueta="Nombre de la descarga", valor="cuenta", expand=False)
 
         # --- CONTENEDOR DE VISTA PREVIA ---
-        self.texto_espera = ft.Text("Esperando Generación...", color=ft.Colors.WHITE54, size=14,
+        self.texto_espera = ft.Text("Esperando Generación...", color=C.texto_suave, size=14,
                                     font_family="CreatoDisplayLight")
         self.preview_image = ft.Image(src="", expand=True, visible=False)
 
@@ -66,7 +67,7 @@ class Image1View(ft.Container):
                 ft.Row([
                     # 1. Tu columna de siempre, pero le ponemos expand=True para que ocupe lo que pueda
                     ft.Column([
-                        ft.Text("Configuración de la imagen", color=ft.Colors.WHITE54, font_family="CreatoDisplay"),
+                        ft.Text("Configuración de la imagen", color=C.texto_suave, font_family="CreatoDisplay"),
                         self._crear_bloque_input("Sección Picos", self.input_picos, self.txt_picos),
                         self._crear_bloque_input("Sección Skins", self.input_skins, self.txt_skins),
                         self._crear_bloque_input("Sección Emotes", self.input_emotes, self.txt_emotes),
@@ -83,11 +84,11 @@ class Image1View(ft.Container):
         # padding 25 dejan el contenido donde lo dejaban.
         right_panel = tarjeta_iphone(
             ft.Column([
-                ft.Text("Vista Previa", color=ft.Colors.WHITE, size=20, font_family="CreatoDisplay"),
+                ft.Text("Vista Previa", color=C.texto, size=20, font_family="CreatoDisplay"),
                 self.image_container, # Ahora sí, se va a estirar a lo bestia
                 ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                 self.input_nombre, 
-                ft.Divider(height=15, color=ft.Colors.WHITE12),
+                ft.Divider(height=15, color=C.linea),
                 ft.Row([self.btn_generar, self.btn_descargar], spacing=15)
             ], spacing=15, expand=True), # <- Importante que este expand siga aquí
             radio=15, padding=25
@@ -183,11 +184,11 @@ class Image1View(ft.Container):
         # Una tarjeta del panel en la medida del bloque de antes (radio 10, y borde + padding
         # 15), que no se estira en la columna. La carpeta, un botón de atajo redondo de 40.
         return tarjeta_iphone(ft.Column([
-                ft.Text(titulo, color=ft.Colors.WHITE, font_family="CreatoDisplay"),
+                ft.Text(titulo, color=C.texto, font_family="CreatoDisplay"),
                 ft.Row([
                     path_field,
                     boton_atajo(ft.Icons.FOLDER_OPEN, None,
                                 lambda _: self.abrir_explorador_nativo(path_field), ancho=40, alto=40)
                 ]),
-                ft.Row([ft.Icon(ft.Icons.TEXT_FIELDS, color=ft.Colors.WHITE54, size=20), text_field])
+                ft.Row([ft.Icon(ft.Icons.TEXT_FIELDS, color=C.texto_suave, size=20), text_field])
             ]), radio=10, padding=15, expand=None)

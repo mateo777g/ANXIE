@@ -5,6 +5,7 @@ import flet as ft
 from models import perfil, sesion
 from views.perfil_ventana import abrir_perfil
 from views.piezas import anillo_brillo, sin_auto_update
+from views.tema import C
 
 # --- BARRA LATERAL ---
 # Una sola para todas las vistas: cada una la pide con crear_barra_lateral(router, sección),
@@ -55,9 +56,9 @@ RADIO = ALTO // 2     # píldora: extremos en semicírculo
 # La curva, el tiempo y el zoom de los atajos (y de "Ver catálogo" de la página web).
 CURVA = ft.Animation(460, ft.AnimationCurve.EASE_OUT_QUINT)
 ZOOM = 1.05
-CARA_REPOSO, CARA_ENCENDIDA = "#0DFFFFFF", "#24FFFFFF"
-# Blanco al 12 %: sobre la barra sale 43, el mismo tono que la raya de debajo del logo.
-BORDE = "#1FFFFFFF"
+# Los colores, del tema (views/tema.py): la cara de la píldora es la de un atajo (C.cara,
+# C.cara_encendida) y la línea del borde derecho, C.linea (en el oscuro sale 43 sobre la barra,
+# el mismo tono que la raya de debajo del logo).
 
 
 def crear_barra_lateral(router, activa):
@@ -66,11 +67,11 @@ def crear_barra_lateral(router, activa):
     router.menu_encendido = False
     return ft.Container(
         width=250,
-        bgcolor="#0e0e0e",
+        bgcolor=C.barra,
         # Línea fina en el borde derecho: separa la barra del contenido, que junto a ella es
         # negro (Inicio) o del mismo #0e0e0e que la barra (las vistas viejas). El borde cuenta
         # como padding, por eso el derecho baja a 19: así el menú sigue midiendo 210.
-        border=ft.Border(right=ft.BorderSide(1, BORDE)),
+        border=ft.Border(right=ft.BorderSide(1, C.linea)),
         # Sin padding a los lados aquí: lo lleva cada parte (_con_margen), para que la raya del
         # pie pueda ir de lado a lado.
         # Los dos recuadros (logo y pie) llevan su contenido centrado de alto (el dueño, 26/09:
@@ -84,7 +85,7 @@ def crear_barra_lateral(router, activa):
             _con_margen(marca()),
             # 30 de alto (era 40, con 20 arriba): la raya queda a 25 del logo y en su sitio. El
             # menú lleva 5 de más encima para no moverse: sigue a 25 de la raya.
-            ft.Divider(height=30, color=ft.Colors.WHITE24),
+            ft.Divider(height=30, color=C.tenue),
 
             # Menú de navegación
             _con_margen(_crear_menu(router, SECCIONES, activa, encendida), arriba=5),
@@ -93,7 +94,7 @@ def crear_barra_lateral(router, activa):
             # todo al fondo de la barra, y la raya es la de debajo del logo.
             ft.Container(expand=True),
             _con_margen(_crear_menu(router, SECCIONES_PIE, activa, encendida)),
-            ft.Divider(height=20, color=ft.Colors.WHITE24),
+            ft.Divider(height=20, color=C.tenue),
             _con_margen(_pie_usuario(router)),
         ], spacing=10)
     )
@@ -117,26 +118,26 @@ def _pie_usuario(router):
     # abre la ventana Perfil. Mide lo que una opción (ANCHO × ALTO) y el círculo va a 6 del
     # borde, concéntrico con el extremo de la píldora: su centro cae donde los iconos del menú.
     radio = DIAMETRO_AVATAR // 2
-    inicial = ft.Text(color=ft.Colors.WHITE, size=14, font_family="CreatoDisplay")
+    inicial = ft.Text(color=C.texto, size=14, font_family="CreatoDisplay")
     avatar = ft.Container(
         width=DIAMETRO_AVATAR, height=DIAMETRO_AVATAR,
         content=ft.Stack([
-            ft.Container(left=0, top=0, right=0, bottom=0, border_radius=radio, bgcolor=CARA_ENCENDIDA,
+            ft.Container(left=0, top=0, right=0, bottom=0, border_radius=radio, bgcolor=C.cara_encendida,
                          alignment=ft.Alignment.CENTER, content=inicial),
             anillo_brillo(ft.Alignment(-1, -1), radio, DIAMETRO_AVATAR),
             anillo_brillo(ft.Alignment(1, 1), radio, DIAMETRO_AVATAR),
         ], clip_behavior=ft.ClipBehavior.NONE)
     )
     # Un nombre largo se corta con "…" y el plan no se mueve de su sitio.
-    nombre = ft.Text(color=ft.Colors.WHITE, size=14, font_family="CreatoDisplay",
+    nombre = ft.Text(color=C.texto, size=14, font_family="CreatoDisplay",
                      max_lines=1, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS,
                      expand=1, expand_loose=True)
     fila = ft.Row([
         avatar,
         ft.Row([
             nombre,
-            ft.Text("·", color=ft.Colors.WHITE54, size=14, font_family="CreatoDisplayLight"),
-            ft.Text(PLAN, color=ft.Colors.WHITE54, size=14, font_family="CreatoDisplayLight"),
+            ft.Text("·", color=C.texto_suave, size=14, font_family="CreatoDisplayLight"),
+            ft.Text(PLAN, color=C.texto_suave, size=14, font_family="CreatoDisplayLight"),
         ], spacing=6, expand=True),
     ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER)
 
@@ -153,7 +154,7 @@ def _pie_usuario(router):
         content=ft.Stack([
             anillo_brillo(ft.Alignment(-1, -1), RADIO, ALTO),
             anillo_brillo(ft.Alignment(1, 1), RADIO, ALTO),
-            ft.Container(left=0, top=0, right=0, bottom=0, border_radius=RADIO, bgcolor=CARA_ENCENDIDA),
+            ft.Container(left=0, top=0, right=0, bottom=0, border_radius=RADIO, bgcolor=C.cara_encendida),
         ], clip_behavior=ft.ClipBehavior.NONE)
     )
     boton = ft.Container(
@@ -187,8 +188,8 @@ def marca(**kwargs):
     return ft.Row([
         ft.CircleAvatar(radius=25, background_image_src="assets/fragmentless.png", bgcolor=ft.Colors.WHITE),
         ft.Column([
-            ft.Text("FRAGMENTLESS", color=ft.Colors.WHITE, size=18, font_family="CreatoDisplay"),
-            ft.Text(f"Plan {PLAN}", color=ft.Colors.WHITE, size=12, font_family="CreatoDisplay")
+            ft.Text("FRAGMENTLESS", color=C.texto, size=18, font_family="CreatoDisplay"),
+            ft.Text(f"Plan {PLAN}", color=C.texto, size=12, font_family="CreatoDisplay")
         ], spacing=0)
     ], **kwargs)
 
@@ -251,7 +252,7 @@ def _crear_menu(router, secciones, activa, encendida):
         pildora.opacity = 1 if encendida or indice_activo is not None else 0
         pildora.top = tops[i]
         pildora.scale = ZOOM if encendida else 1
-        cara.bgcolor = CARA_ENCENDIDA if encendida else CARA_REPOSO
+        cara.bgcolor = C.cara_encendida if encendida else C.cara
         for k, (_, pintar_opcion) in enumerate(opciones):
             pintar_opcion(encendida and k == i)
 
@@ -321,7 +322,7 @@ def _crear_titulo(texto, top):
     # algo separadas, alineado con los iconos de las opciones (su padding de 12).
     return ft.Container(
         left=12, top=top,
-        content=ft.Text(texto, color=ft.Colors.WHITE54, size=11, font_family="CreatoDisplay",
+        content=ft.Text(texto, color=C.texto_suave, size=11, font_family="CreatoDisplay",
                         style=ft.TextStyle(letter_spacing=1.2)),
     )
 
@@ -335,8 +336,8 @@ def _crear_opcion(texto, icono, top):
     # pinta un gris al 25 % al pulsar.
     def fila():
         return ft.Row([
-            ft.Icon(icono, color=ft.Colors.WHITE, size=20),
-            ft.Text(texto, color=ft.Colors.WHITE, size=14, font_family="CreatoDisplayLight")
+            ft.Icon(icono, color=C.texto, size=20),
+            ft.Text(texto, color=C.texto, size=14, font_family="CreatoDisplayLight")
         ], tight=True)
 
     sale = ft.Container(content=fila(), animate_offset=CURVA)
@@ -355,7 +356,7 @@ def _crear_opcion(texto, icono, top):
 
     def pintar(encendida):
         opcion.scale = ZOOM if encendida else 1
-        rodillo.opacity = 1 if encendida else 0.54
+        rodillo.opacity = 1 if encendida else C.reposo
         sale.offset = ft.Offset(0, -1 if encendida else 0)
         entra.offset = ft.Offset(0, 0 if encendida else 1)
 

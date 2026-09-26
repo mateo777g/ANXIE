@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import json
 import os
@@ -6,10 +7,12 @@ import flet as ft
 from PIL import ImageFont
 
 from models import perfil
+from views import tema
 from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
                           tarjeta_iphone, boton_atajo_suelto, etiqueta, globo, aviso,
-                          sin_auto_update)
+                          interruptor, sin_auto_update)
+from views.tema import C
 
 ARCHIVO_CONFIG = "config.json"
 
@@ -28,6 +31,13 @@ CARPETAS = [
 FUENTE_RUTA = "assets/CreatoDisplay-Light.otf"
 TAM_RUTA = 14
 
+# Los temas del panel (views/tema.py), en el orden del interruptor: texto, icono y su nombre.
+TEMAS = [("Oscuro", ft.Icons.DARK_MODE_OUTLINED, "oscuro"),
+         ("Claro", ft.Icons.LIGHT_MODE_OUTLINED, "claro")]
+# El alto de la tarjeta del tema: su cabecera (75), la separación (10), el interruptor (48) y los
+# 7 que dejan las otras tarjetas bajo su botón, más el padding (25 + 25) y el borde (1 + 1).
+ALTO_TEMA = 75 + 10 + 48 + 7 + 50 + 2
+
 
 class AjustesView(ft.Container):
     def __init__(self, router):
@@ -35,7 +45,7 @@ class AjustesView(ft.Container):
         self.router = router
         self.page_ref = router.page
         self.expand = True
-        self.bgcolor = "#0e0e0e"
+        self.bgcolor = C.fondo
         self.gradient = fondo_pagina()
         self.padding = 0
 
@@ -66,8 +76,11 @@ class AjustesView(ft.Container):
                 titulo_vista("Ajustes"),
                 ft.Container(height=25),
                 ft.Row(tarjetas, height=250, spacing=10,
-                       vertical_alignment=ft.CrossAxisAlignment.STRETCH)
-            ])
+                       vertical_alignment=ft.CrossAxisAlignment.STRETCH),
+                # Debajo, de lado a lado (del ancho de las dos), el tema (la idea del dueño, 26/09).
+                ft.Row([self._crear_tarjeta_tema()], height=ALTO_TEMA,
+                       vertical_alignment=ft.CrossAxisAlignment.STRETCH),
+            ], spacing=10)
         )
 
         self.content = ft.Row([crear_barra_lateral(self.router, "ajustes"), main_content],
@@ -100,7 +113,7 @@ class AjustesView(ft.Container):
         # Etiqueta, ruta y botón caen donde la etiqueta de un contador, su número y la segunda
         # fila de atajos de Inicio.
         fila_etiqueta, _ = etiqueta(icono, "Carpeta actual")
-        texto = ft.Text(ruta, color=ft.Colors.WHITE, size=TAM_RUTA, font_family="CreatoDisplayLight",
+        texto = ft.Text(ruta, color=C.texto, size=TAM_RUTA, font_family="CreatoDisplayLight",
                         max_lines=1, overflow=ft.TextOverflow.ELLIPSIS)
         self._poner_globo(texto)
         self.textos_ruta[clave] = texto
@@ -132,6 +145,26 @@ class AjustesView(ft.Container):
             on_tap_down=sin_auto_update(lambda _: hundir()),
             on_click=sin_auto_update(al_pulsar)
         )
+
+    def _crear_tarjeta_tema(self):
+        # La cabecera, como las de las carpetas, y abajo el interruptor de Mi biblioteca con los
+        # dos temas, en el sitio del botón de las otras (7 px por encima del fondo). Al elegir
+        # uno, el botón del interruptor se desliza hasta él y, al acabar, la vista entera se
+        # rehace con los colores nuevos (MainController.cambiar_tema).
+        nombres = [nombre for _, _, nombre in TEMAS]
+
+        def al_cambiar(i):
+            async def cambiar():
+                await asyncio.sleep(0.3)   # que se vea el botón llegar a su sitio
+                self.router.cambiar_tema(nombres[i])
+            self.page_ref.run_task(cambiar)
+
+        selector = interruptor([(texto, icono) for texto, icono, _ in TEMAS],
+                               nombres.index(tema.actual()), al_cambiar)
+        return tarjeta_iphone(ft.Container(padding=ft.Padding(bottom=7), content=ft.Column([
+            *cabecera_tarjeta("TEMA", "Los colores del panel: oscuro o claro."),
+            ft.Container(expand=True, alignment=ft.Alignment.BOTTOM_LEFT, content=selector),
+        ], spacing=10)))
 
     def _poner_globo(self, texto):
         # La ruta entera en un globo, solo si no cabe en su tarjeta (sale cortada con "…"); si

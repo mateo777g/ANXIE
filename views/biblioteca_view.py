@@ -11,6 +11,7 @@ from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
                           tarjeta_iphone, boton_atajo, boton_atajo_suelto, interruptor, globo,
                           aviso, aislar, sin_auto_update)
+from views.tema import C
 
 # Las dos pestañas: texto, icono (el mismo que su atajo en Inicio y su contador) y carpeta.
 PESTANAS = [
@@ -47,7 +48,7 @@ class BibliotecaView(ft.Container):
         self.router = router
         self.page_ref = router.page
         self.expand = True
-        self.bgcolor = "#0e0e0e"
+        self.bgcolor = C.fondo
         self.gradient = fondo_pagina()
         self.padding = 0
 
@@ -239,7 +240,7 @@ class BibliotecaView(ft.Container):
             border_radius=10,
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
             # Mientras carga, el hueco de la imagen se ve como la cara de un botón.
-            bgcolor="#0DFFFFFF",
+            bgcolor=C.cara,
             content=foto
         )
         descargar = boton_atajo(ft.Icons.DOWNLOAD_ROUNDED,

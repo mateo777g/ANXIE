@@ -5,6 +5,7 @@ from models import perfil
 from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
                           tarjeta_iphone, boton_atajo, etiqueta)
+from views.tema import C
 
 class HomeView(ft.Container):
     def __init__(self, router):
@@ -12,7 +13,7 @@ class HomeView(ft.Container):
         self.router = router
         self.page_ref = router.page
         self.expand = True
-        self.bgcolor = "#0e0e0e"
+        self.bgcolor = C.fondo
         self.gradient = fondo_pagina()
         self.padding = 0
 
@@ -137,7 +138,7 @@ class HomeView(ft.Container):
         # base queda justo en el borde de abajo del Stack. Ese 0.348 del tamaño está medido
         # en el panel, igual en el de escritorio y en el web (no es el 0.233 que dice el
         # archivo de la fuente: Flutter le suma parte del interlineado).
-        numero = ft.Text("0", color="#909090", size=tam, font_family="Coolvetica",
+        numero = ft.Text("0", color=C.contador, size=tam, font_family="Coolvetica",
                          left=0, bottom=-round(tam * 0.348))
         fila_etiqueta, texto_etiqueta = etiqueta(None)
         contador = ft.Container(expand=1, content=ft.Column([

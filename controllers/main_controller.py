@@ -9,6 +9,7 @@ from views.cuentas_view import CuentasView
 from views.login_view import LoginView
 from views.recibo_view import ReciboView
 from views.piezas import sin_auto_update
+from views import tema
 
 # 🔥 IMPORTAMOS TUS NUEVOS ARCHIVOS RÉPLICA AQUÍ 🔥
 from views.imgmini_view import CuentaPequenaView 
@@ -18,7 +19,10 @@ class MainController:
     def __init__(self, page: ft.Page):
         self.page = page
         self.page.title = "Anxie Store - Panel"
-        self.page.theme_mode = "dark"
+        # El tema que quedó elegido en Ajustes (config.json; el oscuro si no hay). Antes de crear
+        # ninguna vista: cada una lee sus colores al construirse (views/tema.py).
+        tema.cargar()
+        self.page.theme_mode = tema.C.modo
         self.page.padding = 0 
         # Creato Display, la letra del diseño nuevo (ver DISENO.md). Se registra aquí, una sola
         # vez, porque la barra lateral la usa en todas las vistas.
@@ -67,6 +71,19 @@ class MainController:
         self.page.update()
         self.page.controls.remove(vieja)
         self.page.update()
+
+    def cambiar_tema(self, nombre):
+        # Lo llama Ajustes al elegir otro tema: se guarda, y se rehace Ajustes (con su barra) ya
+        # con los colores nuevos; las demás vistas se construyen con ellos al abrirlas. La capa
+        # de la ventana Perfil vive en page.overlay (se crea una vez): se quita para que la
+        # próxima vez nazca con el velo del tema nuevo.
+        tema.guardar(nombre)
+        self.page.theme_mode = tema.C.modo
+        ventana = getattr(self, "ventana_perfil", None)
+        if ventana is not None:
+            self.page.overlay.remove(ventana["capa"])
+            self.ventana_perfil = None
+        self.cambiar_vista("ajustes")
 
     def cambiar_vista(self, vista: str):
         if vista == "home":

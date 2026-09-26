@@ -3,6 +3,7 @@ import flet as ft
 from views.barra_lateral import crear_barra_lateral
 from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
                           tarjeta_iphone, boton_atajo_suelto, sin_auto_update)
+from views.tema import C
 
 # Las cuatro tareas: título, subtítulo, icono (el mismo que su botón de atajo en Inicio) y la
 # ruta de MainController.cambiar_vista a la que lleva.
@@ -20,7 +21,7 @@ class ContenidoView(ft.Container):
         self.router = router
         self.page_ref = router.page
         self.expand = True
-        self.bgcolor = "#0e0e0e"
+        self.bgcolor = C.fondo
         self.gradient = fondo_pagina()
         self.padding = 0
 

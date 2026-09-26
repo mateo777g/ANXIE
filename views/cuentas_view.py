@@ -15,6 +15,7 @@ from views.login_view import mensaje_error
 from views.piezas import (MESES, fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
                           tarjeta_iphone, boton_atajo, boton_atajo_suelto, apagar_boton, campo,
                           etiqueta, globo, aviso, capa_ventana, sin_auto_update)
+from views.tema import C
 
 # --- CUENTAS ---
 # El inventario de la tienda (la tabla Cuentas de Supabase, lo que vende anxiestore.com): lo que
@@ -36,8 +37,6 @@ ANCHO_ACCIONES = 3 * BOTON + 2 * 8
 # La foto de cada fila, con la forma de las de la tienda (16:9), decodificada pequeña: entera,
 # una foto de 1600 o 2560 px ocuparía megas de memoria para enseñarse a 80.
 FOTO_ANCHO, FOTO_ALTO = 80, 45
-# El tono de las rayas del panel (la de la barra lateral y el borde de los campos).
-LINEA = "#1FFFFFFF"
 # Lo que mide una fila: la foto (45, lo más alto de la fila: los textos van a 2 líneas como mucho
 # y las pastillas a 2 filas) y su padding (12 + 12). Encima de cada una, su raya de 1.
 ALTO_FILA = FOTO_ALTO + 24
@@ -66,7 +65,7 @@ class CuentasView(ft.Container):
         self.router = router
         self.page_ref = router.page
         self.expand = True
-        self.bgcolor = "#0e0e0e"
+        self.bgcolor = C.fondo
         self.gradient = fondo_pagina()
         self.padding = 0
 
@@ -267,7 +266,7 @@ class CuentasView(ft.Container):
         # raya encima, y las pone al final de la lista.
         nuevas = self.cuentas[self.hechas:self.hechas + cuantas]
         for c in nuevas:
-            self.rayas[c["id"]] = ft.Container(height=1, bgcolor=LINEA)
+            self.rayas[c["id"]] = ft.Container(height=1, bgcolor=C.linea)
             self.filas[c["id"]] = self._crear_fila(c)
             self.lista.controls += [self.rayas[c["id"]], self.filas[c["id"]]]
         self.hechas += len(nuevas)
@@ -335,11 +334,11 @@ class CuentasView(ft.Container):
         encabezados = ft.Container(
             padding=ft.Padding(bottom=12),
             content=ft.Row([
-                *[ft.Text(texto, expand=peso, color=ft.Colors.WHITE54, size=12,
+                *[ft.Text(texto, expand=peso, color=C.texto_suave, size=12,
                           font_family="CreatoDisplayLight") for texto, peso in COLUMNAS],
                 ft.Container(width=ANCHO_ACCIONES),
             ], spacing=SEPARACION))
-        tabla = ft.Column([encabezados, ft.Container(height=1, bgcolor=LINEA), *renglones],
+        tabla = ft.Column([encabezados, ft.Container(height=1, bgcolor=C.linea), *renglones],
                           spacing=0)
         return tarjeta_iphone(ft.Column([*self.subtitulo_tabla, tabla], spacing=10), expand=None)
 
@@ -360,23 +359,23 @@ class CuentasView(ft.Container):
         foto = ft.Container(
             width=FOTO_ANCHO, height=FOTO_ALTO, border_radius=6,
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-            bgcolor="#0DFFFFFF",          # mientras carga, la cara de un botón (como Mi biblioteca)
+            bgcolor=C.cara,          # mientras carga, la cara de un botón (como Mi biblioteca)
             opacity=1 if visible else 0.4,
             content=ft.Image(src=cuenta.get("image_url") or "", fit=ft.BoxFit.COVER,
                              cache_width=FOTO_ANCHO * 3,
                              error_content=ft.Icon(ft.Icons.IMAGE_NOT_SUPPORTED_OUTLINED,
-                                                   color=ft.Colors.WHITE24, size=20)),
+                                                   color=C.tenue, size=20)),
         )
-        titulo = ft.Text((cuenta.get("titulo") or "").strip(), color=ft.Colors.WHITE, size=14,
+        titulo = ft.Text((cuenta.get("titulo") or "").strip(), color=C.texto, size=14,
                          font_family="CreatoDisplay", max_lines=2,
                          overflow=ft.TextOverflow.ELLIPSIS, expand=True)
-        descripcion = ft.Text((cuenta.get("descripcion") or "").strip(), color=ft.Colors.WHITE54,
+        descripcion = ft.Text((cuenta.get("descripcion") or "").strip(), color=C.texto_suave,
                               size=12, font_family="CreatoDisplayLight", max_lines=2,
                               overflow=ft.TextOverflow.ELLIPSIS)
         precio = ft.Column([
-            ft.Text(_precio(cuenta.get("preciomxn"), "MXN"), color=ft.Colors.WHITE, size=14,
+            ft.Text(_precio(cuenta.get("preciomxn"), "MXN"), color=C.texto, size=14,
                     font_family="CreatoDisplayLight"),
-            ft.Text(_precio(cuenta.get("preciousd"), "USD"), color=ft.Colors.WHITE54, size=12,
+            ft.Text(_precio(cuenta.get("preciousd"), "USD"), color=C.texto_suave, size=12,
                     font_family="CreatoDisplayLight"),
         ], spacing=2)
 
@@ -471,15 +470,15 @@ class CuentasView(ft.Container):
         visible = bool(cuenta.get("visible", True))
         foto = ft.Container(
             aspect_ratio=16 / 9, border_radius=10, clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-            bgcolor="#0DFFFFFF",
+            bgcolor=C.cara,
             content=ft.Image(src=cuenta.get("image_url") or "", fit=ft.BoxFit.COVER,
                              cache_width=1280,
                              error_content=ft.Icon(ft.Icons.IMAGE_NOT_SUPPORTED_OUTLINED,
-                                                   color=ft.Colors.WHITE24, size=28)))
+                                                   color=C.tenue, size=28)))
         precio = ft.Column([
-            ft.Text(_precio(cuenta.get("preciomxn"), "MXN"), color=ft.Colors.WHITE, size=14,
+            ft.Text(_precio(cuenta.get("preciomxn"), "MXN"), color=C.texto, size=14,
                     font_family="CreatoDisplayLight"),
-            ft.Text(_precio(cuenta.get("preciousd"), "USD"), color=ft.Colors.WHITE54, size=12,
+            ft.Text(_precio(cuenta.get("preciousd"), "USD"), color=C.texto_suave, size=12,
                     font_family="CreatoDisplayLight"),
         ], spacing=2)
         datos = ft.Column([
@@ -640,14 +639,14 @@ class CuentasView(ft.Container):
         # La foto: la de la cuenta, o un hueco con su icono (Agregar). Al elegir una, sale ahí.
         imagen = ft.Image(src=c.get("image_url") or "", fit=ft.BoxFit.COVER, cache_width=1280,
                           error_content=ft.Icon(ft.Icons.IMAGE_NOT_SUPPORTED_OUTLINED,
-                                                color=ft.Colors.WHITE24, size=28))
-        hueco = ft.Icon(ft.Icons.ADD_PHOTO_ALTERNATE_OUTLINED, color=ft.Colors.WHITE24, size=28)
+                                                color=C.tenue, size=28))
+        hueco = ft.Icon(ft.Icons.ADD_PHOTO_ALTERNATE_OUTLINED, color=C.tenue, size=28)
         foto = ft.Container(
             aspect_ratio=16 / 9, border_radius=10, clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-            bgcolor="#0DFFFFFF", alignment=ft.Alignment.CENTER,
+            bgcolor=C.cara, alignment=ft.Alignment.CENTER,
             content=imagen if c.get("image_url") else hueco)
         nota_foto = ft.Text("JPG, PNG o WebP, hasta 15 MB. Se sube en WebP de hasta 2560 px.",
-                            color=ft.Colors.WHITE54, size=12, font_family="CreatoDisplayLight")
+                            color=C.texto_suave, size=12, font_family="CreatoDisplayLight")
         boton_foto = boton_atajo(ft.Icons.IMAGE_OUTLINED, "Elegir foto" if nueva else "Cambiar foto",
                                  lambda _: self.page_ref.run_task(self._elegir_foto, estado, foto,
                                                                   imagen, nota_foto))
@@ -805,7 +804,7 @@ class CuentasView(ft.Container):
         if self.lista is None:
             self._pintar_tabla()            # era la tienda vacía: ahora sí hay tabla
             return
-        self.rayas[cuenta["id"]] = ft.Container(height=1, bgcolor=LINEA)
+        self.rayas[cuenta["id"]] = ft.Container(height=1, bgcolor=C.linea)
         self.filas[cuenta["id"]] = self._crear_fila(cuenta)
         self.lista.controls[0:0] = [self.rayas[cuenta["id"]], self.filas[cuenta["id"]]]
         self.hechas += 1
@@ -831,7 +830,7 @@ class CuentasView(ft.Container):
         # WHITE54, centrado.
         return ft.Container(
             padding=ft.Padding(top=28, bottom=16), alignment=ft.Alignment.CENTER,
-            content=ft.Text(texto, color=ft.Colors.WHITE54, size=13,
+            content=ft.Text(texto, color=C.texto_suave, size=13,
                             font_family="CreatoDisplayLight"))
 
     def _tarjeta_centrada(self, titulo, subtitulo, contenido=None, boton=None):
@@ -881,7 +880,7 @@ def _dato(icono, texto, valor):
 
 
 def _texto_dato(texto):
-    return ft.Text(texto, color=ft.Colors.WHITE, size=14, font_family="CreatoDisplayLight")
+    return ft.Text(texto, color=C.texto, size=14, font_family="CreatoDisplayLight")
 
 
 def _vbucks(valor):
@@ -914,19 +913,19 @@ def _subida(cuenta):
 def _pastilla(texto):
     # Una pastilla de la tabla: la cara de un botón (blanco al 5 %) con el texto en Light 10.
     return ft.Container(
-        bgcolor="#0DFFFFFF", border_radius=9, padding=ft.Padding(left=7, top=2, right=7, bottom=2),
-        content=ft.Text(texto, color=ft.Colors.WHITE, size=10, font_family="CreatoDisplayLight"))
+        bgcolor=C.cara, border_radius=9, padding=ft.Padding(left=7, top=2, right=7, bottom=2),
+        content=ft.Text(texto, color=C.texto, size=10, font_family="CreatoDisplayLight"))
 
 
 def _estado(visible):
     # "VISIBLE" / "OCULTA", en una píldora con la raya del panel. Sin colores (regla 3): la
     # visible en blanco con su punto lleno; la oculta en WHITE54 con el punto hueco.
-    color = ft.Colors.WHITE if visible else ft.Colors.WHITE54
+    color = C.texto if visible else C.texto_suave
     punto = ft.Container(width=6, height=6, border_radius=3,
-                         bgcolor=ft.Colors.WHITE if visible else None,
-                         border=None if visible else ft.Border.all(1, ft.Colors.WHITE54))
+                         bgcolor=C.texto if visible else None,
+                         border=None if visible else ft.Border.all(1, C.texto_suave))
     return ft.Container(
-        border=ft.Border.all(1, ft.Colors.WHITE24 if visible else LINEA), border_radius=11,
+        border=ft.Border.all(1, C.tenue if visible else C.linea), border_radius=11,
         padding=ft.Padding(left=9, top=4, right=10, bottom=4),
         content=ft.Row([punto, ft.Text("VISIBLE" if visible else "OCULTA", color=color, size=10,
                                        font_family="CreatoDisplayLight")],
@@ -939,7 +938,7 @@ def _plataformas(disponibilidad):
     texto = (disponibilidad or "").strip()
     nombres = [nombre for regex, nombre in PLATAFORMAS if regex.search(texto)]
     if not nombres:
-        return ft.Text(texto or "—", color=ft.Colors.WHITE54, size=12,
+        return ft.Text(texto or "—", color=C.texto_suave, size=12,
                        font_family="CreatoDisplayLight", max_lines=2,
                        overflow=ft.TextOverflow.ELLIPSIS)
     return ft.Row([_pastilla(nombre) for nombre in nombres], spacing=4, run_spacing=4, wrap=True)

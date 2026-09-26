@@ -3,6 +3,7 @@ import flet as ft
 from models import perfil
 from views.piezas import (aviso, boton_atajo, cabecera_tarjeta, campo, capa_ventana,
                           sin_auto_update, tarjeta_iphone)
+from views.tema import C
 
 # --- VENTANA "PERFIL" ---
 # Se abre al pulsar el pie de la barra lateral (el dueño, 26/09, con la de Claude delante:
@@ -24,7 +25,7 @@ def abrir_perfil(router):
     ventana = getattr(router, "ventana_perfil", None)
     if ventana is None:
         capa, abrir, cerrar = capa_ventana(page)
-        ventana = router.ventana_perfil = {"abrir": abrir, "cerrar": cerrar}
+        ventana = router.ventana_perfil = {"capa": capa, "abrir": abrir, "cerrar": cerrar}
         # El velo cierra con el cerrar() de esta vez, que además le devuelve Escape a la vista.
         capa.on_click = sin_auto_update(lambda _: ventana["al_cerrar"]())
         page.overlay.append(capa)
@@ -75,7 +76,7 @@ def abrir_perfil(router):
     tarjeta = tarjeta_iphone(ft.Column([
         *cabecera_tarjeta("PERFIL", "Tus datos y cómo te llama Fragmentless en el panel."),
         _fila("Nombre completo", campo_nombre),
-        ft.Divider(height=1, thickness=1, color="#1FFFFFFF"),
+        ft.Divider(height=1, thickness=1, color=C.linea),
         _fila("¿Cómo quieres que Fragmentless te llame?", campo_llamarte),
         ft.Container(height=20),
         ft.Row([boton_atajo(ft.Icons.CHECK, "Guardar cambios", guardar),
@@ -103,7 +104,7 @@ def _fila(texto, control):
     return ft.Container(
         padding=ft.Padding(left=0, top=6, right=0, bottom=6),
         content=ft.Row([
-            ft.Text(texto, color=ft.Colors.WHITE, size=14, font_family="CreatoDisplayLight", expand=True),
+            ft.Text(texto, color=C.texto, size=14, font_family="CreatoDisplayLight", expand=True),
             control,
         ], spacing=25, vertical_alignment=ft.CrossAxisAlignment.CENTER),
     )

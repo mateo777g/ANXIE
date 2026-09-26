@@ -3,6 +3,8 @@ import datetime
 
 import flet as ft
 
+from views.tema import C
+
 # Piezas de diseño que comparten las vistas del panel. Las reglas y el porqué de cada número
 # están en DISENO.md.
 
@@ -18,7 +20,7 @@ def fondo_pagina():
     return ft.RadialGradient(
         center=ft.Alignment(0.95, 0.85),
         radius=1.25,
-        colors=["#a5a5a5", "#5c5c5c", "#1a1a1a", "#000000"],
+        colors=C.fondo_pagina,
         stops=[0, 0.32, 0.7, 1]
     )
 
@@ -27,13 +29,13 @@ def fecha_vista():
     # La fecha de arriba de cada vista ("JUEVES, 24 DE SEPTIEMBRE").
     hoy = datetime.datetime.now()
     texto = f"{DIAS[hoy.weekday()]}, {hoy.day} DE {MESES[hoy.month - 1]}"
-    return ft.Text(texto, color=ft.Colors.WHITE, size=14, font_family="CreatoDisplayLight")
+    return ft.Text(texto, color=C.texto, size=14, font_family="CreatoDisplayLight")
 
 
 def titulo_vista(texto, tamano=40):
     # El título grande de cada vista ("Buenos días, Miguel", "Crear contenido"). Los
     # generadores lo llevan a 35, su tamaño de siempre (regla 11: nada cambia de tamaño).
-    return ft.Text(texto, size=tamano, color=ft.Colors.WHITE, font_family="CreatoDisplay")
+    return ft.Text(texto, size=tamano, color=C.texto, font_family="CreatoDisplay")
 
 
 def brillo(esquina, radio=1.0):
@@ -43,7 +45,7 @@ def brillo(esquina, radio=1.0):
     return ft.RadialGradient(
         center=esquina,
         radius=radio,
-        colors=["#8AFFFFFF", "#2EFFFFFF", "#00FFFFFF"],
+        colors=C.brillo,
         stops=[0, 0.3, 1]
     )
 
@@ -69,7 +71,7 @@ def anillo_brillo(esquina, radio, alto):
         blend_mode=ft.BlendMode.DST_IN,
         content=ft.Container(
             margin=holgura,
-            border=ft.Border.all(1, ft.Colors.WHITE), border_radius=radio
+            border=ft.Border.all(1, C.anillo), border_radius=radio
         )
     )
 
@@ -77,8 +79,8 @@ def anillo_brillo(esquina, radio, alto):
 def cabecera_tarjeta(titulo, subtitulo):
     # Título y subtítulo de una tarjeta, iguales en todas: el título en mayúsculas.
     return [
-        ft.Text(titulo, size=16, color=ft.Colors.WHITE, font_family="CreatoDisplay"),
-        ft.Text(subtitulo, color=ft.Colors.WHITE54, size=12, font_family="CreatoDisplayLight"),
+        ft.Text(titulo, size=16, color=C.texto, font_family="CreatoDisplay"),
+        ft.Text(subtitulo, color=C.texto_suave, size=12, font_family="CreatoDisplayLight"),
         ft.Container(height=15),
     ]
 
@@ -102,7 +104,7 @@ def tarjeta_iphone(contenido, radio=16, padding=25, expand=1, colores=None, **ev
         shadow=ft.BoxShadow(
             blur_radius=14,
             spread_radius=-14,
-            color=ft.Colors.BLACK54,
+            color=C.sombra,
             offset=ft.Offset(0, 16)
         ),
         content=ft.Container(
@@ -116,7 +118,7 @@ def tarjeta_iphone(contenido, radio=16, padding=25, expand=1, colores=None, **ev
                 gradient=ft.LinearGradient(
                     begin=ft.Alignment(-1, -1),
                     end=ft.Alignment(1, 1),
-                    colors=colores or ["#222222", "#3a3a3a"]
+                    colors=colores or C.tarjeta
                 ),
                 border_radius=radio - 1,
                 padding=padding,
@@ -133,7 +135,7 @@ CURVA = ft.Animation(460, ft.AnimationCurve.EASE_OUT_QUINT)
 ZOOM = 1.05
 
 
-def relevo(fila, reposo=0.54):
+def relevo(fila, reposo=None):
     # El relevo de "Ver catálogo": la fila (icono y texto) está escrita dos veces, apiladas y
     # recortadas; al encenderse, la primera sube y la segunda entra desde abajo. `fila` es una
     # función que devuelve la fila (se llama una vez por copia). Devuelve la capa y la función
@@ -142,6 +144,7 @@ def relevo(fila, reposo=0.54):
     # alto de la propia fila. Icono y texto van en blanco dentro de una capa al 54 %: en reposo
     # se ven igual que WHITE54, y al encenderse la capa sube al 100 % con una transición suave
     # (el color de un ft.Text cambiaría de golpe).
+    reposo = C.reposo if reposo is None else reposo
     sale = ft.Container(content=fila(), offset=ft.Offset(0, 0), animate_offset=CURVA)
     entra = ft.Container(content=fila(), offset=ft.Offset(0, 1), animate_offset=CURVA)
     rodillo = ft.Container(
@@ -166,10 +169,10 @@ def etiqueta(icono, texto=""):
     # Sin icono (icono=None, los contadores de Inicio desde el 26/09): solo el texto, en una
     # franja de 20 como la del icono, así el texto queda a la misma altura y lo de debajo no se
     # mueve.
-    texto = ft.Text(texto, color=ft.Colors.WHITE54, size=13, font_family="CreatoDisplayLight")
+    texto = ft.Text(texto, color=C.texto_suave, size=13, font_family="CreatoDisplayLight")
     if icono is None:
         return ft.Container(height=20, alignment=ft.Alignment.CENTER_LEFT, content=texto), texto
-    return ft.Row([ft.Icon(icono, color=ft.Colors.WHITE54, size=20), texto], spacing=8), texto
+    return ft.Row([ft.Icon(icono, color=C.texto_suave, size=20), texto], spacing=8), texto
 
 
 def globo(texto, distancia=32, encima=False):
@@ -178,8 +181,8 @@ def globo(texto, distancia=32, encima=False):
     # (debajo, como el de "Eliminar" en Mi biblioteca).
     return ft.Tooltip(
         message=texto,
-        text_style=ft.TextStyle(size=12, color=ft.Colors.WHITE, font_family="CreatoDisplayLight"),
-        decoration=ft.BoxDecoration(bgcolor="#2a2a2a", border_radius=ft.BorderRadius.all(12)),
+        text_style=ft.TextStyle(size=12, color=C.globo_texto, font_family="CreatoDisplayLight"),
+        decoration=ft.BoxDecoration(bgcolor=C.globo, border_radius=ft.BorderRadius.all(12)),
         padding=ft.Padding(left=12, top=6, right=12, bottom=6),
         vertical_offset=distancia,
         prefer_below=False if encima else None,
@@ -187,9 +190,11 @@ def globo(texto, distancia=32, encima=False):
     )
 
 
-def fila_atajo(icono, texto=None, color=ft.Colors.WHITE):
+def fila_atajo(icono, texto=None, color=None):
     # Lo de dentro de un botón de atajo: icono 20 y texto Light 13, separación 8. Sin texto,
-    # solo el icono (el botón redondo de "Eliminar" en Mi biblioteca).
+    # solo el icono (el botón redondo de "Eliminar" en Mi biblioteca). Sin `color`, el del texto
+    # del tema.
+    color = color or C.texto
     fila = [ft.Icon(icono, color=color, size=20)]
     if texto:
         fila.append(ft.Text(texto, color=color, size=13, font_family="CreatoDisplayLight"))
@@ -276,17 +281,18 @@ def boton_atajo_suelto(icono, texto, ancho=None, alto=48, claro=False, radio=Non
     # Al pulsarlo se hunde a 0.97, también como en la web, y la cara sube al 20 %.
     # Sin ink de Flet a propósito: el tema oscuro pinta al pulsar un gris al 25 % que
     # tapaba el botón entero, y el contenedor no deja cambiar ese color.
-    cara_reposo, cara_encendida, cara_pulsada = "#0DFFFFFF", "#24FFFFFF", "#33FFFFFF"
+    cara_reposo, cara_encendida, cara_pulsada = C.cara, C.cara_encendida, C.cara_pulsada
     # `claro` (26/09, "Entrar" de la pantalla de entrar, lo pidió el dueño): el mismo botón en
     # blanco, con icono y texto en negro. Misma forma, relevo, zoom y anillos (tapados por la cara,
     # que es opaca); la cara va del 94 % al blanco puro al encenderse y baja al 82 % al pulsar, y
     # el contenido reposa al 85 % (al 54 %, y aun al 75 %, el negro sobre blanco se leía gris).
+    # En el tema claro es al revés: negro, con icono y texto en blanco (C.destacado).
     if claro:
-        cara_reposo, cara_encendida, cara_pulsada = "#F0FFFFFF", "#FFFFFFFF", "#D1FFFFFF"
-    color = ft.Colors.BLACK if claro else ft.Colors.WHITE
+        cara_reposo, cara_encendida, cara_pulsada = C.destacado
+    color = C.destacado_texto if claro else C.texto
 
     rodillo, encender_relevo = relevo(lambda: fila_atajo(icono, texto, color),
-                                      0.85 if claro else 0.54)
+                                      0.85 if claro else None)
     cara = ft.Container(
         left=0, top=0, right=0, bottom=0,
         alignment=ft.Alignment.CENTER,
@@ -336,7 +342,7 @@ def interruptor(opciones, elegida, al_cambiar):
     alto_boton = alto - 2 * hueco
     ancho = 124                  # cada opción: caben icono y texto con aire a los lados
     radio, radio_boton = alto // 2, alto_boton // 2
-    cara_reposo, cara_encendida, cara_pulsada = "#0DFFFFFF", "#24FFFFFF", "#33FFFFFF"
+    cara_reposo, cara_encendida, cara_pulsada = C.cara, C.cara_encendida, C.cara_pulsada
     estado = {"elegida": elegida, "indice": elegida, "encendida": False, "pulsada": False}
 
     cara = ft.Container(
@@ -446,11 +452,11 @@ def aviso(page, texto, abajo=40, barra=250):
     ancho = 320
     lado = max(16, ((page.width or 1264) - barra - ancho) / 2)
     page.overlay.append(ft.SnackBar(
-        ft.Row([ft.Text(texto, color=ft.Colors.WHITE, size=13, font_family="CreatoDisplayLight")],
+        ft.Row([ft.Text(texto, color=C.globo_texto, size=13, font_family="CreatoDisplayLight")],
                alignment=ft.MainAxisAlignment.CENTER),
         open=True,
         behavior=ft.SnackBarBehavior.FLOATING,
-        bgcolor="#2a2a2a",
+        bgcolor=C.globo,
         shape=ft.RoundedRectangleBorder(radius=24),
         margin=ft.Margin(left=barra + lado, right=lado, bottom=abajo),
         padding=ft.Padding(left=20, top=15, right=20, bottom=15),
@@ -473,7 +479,7 @@ def capa_ventana(page, se_puede_cerrar=None):
     envoltura = ft.Container(scale=0.97, animate_scale=CURVA)
     capa = ft.Container(
         left=0, top=0, right=0, bottom=0, visible=False, opacity=0,
-        bgcolor="#99000000", padding=40, alignment=ft.Alignment.CENTER,
+        bgcolor=C.velo, padding=40, alignment=ft.Alignment.CENTER,
         animate_opacity=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
         content=envoltura,
     )
@@ -519,8 +525,7 @@ def capa_ventana(page, se_puede_cerrar=None):
 # 54 % cuando se escribe en él (el blanco del brillo de las esquinas), siempre de 1 px (Flutter
 # la pone de 2 al escribir: pesaba más que todas las líneas del panel). La letra, la del panel.
 # El tamaño, el de siempre (regla 11): texto a 12 y el relleno que ya tenía cada campo.
-FONDO_CAMPO = "#33000000"
-BORDE_CAMPO = "#1FFFFFFF"
+# Sus colores, C.pozo y C.linea (views/tema.py).
 
 
 def campo(etiqueta=None, pista=None, valor="", solo_lectura=False, relleno=None, expand=True,
@@ -530,19 +535,19 @@ def campo(etiqueta=None, pista=None, valor="", solo_lectura=False, relleno=None,
     # escrito y deja verlo con el ojo. `tamano` es para los campos nuevos (Cuentas: 13, el
     # texto de un atajo), que llevan la pista del mismo tamaño que el texto; sin él, el campo
     # de los generadores de siempre (texto a 12 y la pista de Flutter).
-    luz = ft.TextStyle(font_family="CreatoDisplayLight", color=ft.Colors.WHITE54, size=tamano)
+    luz = ft.TextStyle(font_family="CreatoDisplayLight", color=C.texto_suave, size=tamano)
     return ft.TextField(
         label=etiqueta, hint_text=pista, value=valor, read_only=solo_lectura,
         expand=expand, content_padding=relleno, text_size=tamano or 12,
-        color=ft.Colors.WHITE,
+        color=C.texto,
         text_style=ft.TextStyle(font_family="CreatoDisplayLight"),
         label_style=luz, hint_style=luz,
-        prefix_icon=ft.Icon(icono, color=ft.Colors.WHITE54, size=20) if icono else None,
+        prefix_icon=ft.Icon(icono, color=C.texto_suave, size=20) if icono else None,
         password=contrasena, can_reveal_password=contrasena,
         on_change=al_cambiar, on_submit=al_enviar, autofocus=autofoco,
-        bgcolor=FONDO_CAMPO, border_color=BORDE_CAMPO,
-        focused_border_color=ft.Colors.WHITE54, focused_border_width=1, border_radius=10,
-        cursor_color=ft.Colors.WHITE, selection_color=ft.Colors.WHITE24,
+        bgcolor=C.pozo, border_color=C.linea,
+        focused_border_color=C.texto_suave, focused_border_width=1, border_radius=10,
+        cursor_color=C.texto, selection_color=C.tenue,
     )
 
 
@@ -551,9 +556,9 @@ def opcion_radio(valor):
     # elegida y al 54 % las demás, y el texto en Light blanco. Sin rojo.
     return ft.Radio(
         value=valor, label=valor,
-        label_style=ft.TextStyle(font_family="CreatoDisplayLight", color=ft.Colors.WHITE),
-        fill_color={ft.ControlState.SELECTED: ft.Colors.WHITE, ft.ControlState.DEFAULT: ft.Colors.WHITE54},
-        overlay_color={ft.ControlState.HOVERED: "#24FFFFFF", ft.ControlState.PRESSED: "#33FFFFFF",
+        label_style=ft.TextStyle(font_family="CreatoDisplayLight", color=C.texto),
+        fill_color={ft.ControlState.SELECTED: C.texto, ft.ControlState.DEFAULT: C.texto_suave},
+        overlay_color={ft.ControlState.HOVERED: C.cara_encendida, ft.ControlState.PRESSED: C.cara_pulsada,
                        ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT},
     )
 
@@ -565,6 +570,6 @@ def hueco_imagen(contenido):
     # que le quede en su columna y todo el ancho (width=9999 lo recorta la columna).
     return ft.Container(
         expand=True, width=9999,
-        bgcolor=FONDO_CAMPO, border_radius=10, border=ft.Border.all(2, BORDE_CAMPO),
+        bgcolor=C.pozo, border_radius=10, border=ft.Border.all(2, C.linea),
         content=contenido
     )
