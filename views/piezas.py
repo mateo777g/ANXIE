@@ -435,6 +435,14 @@ def interruptor(opciones, elegida, al_cambiar):
             *[etiqueta for etiqueta, _ in etiquetas]
         ], clip_behavior=ft.ClipBehavior.NONE)
     )
+    def elegir(i):
+        # Para quien tenga que devolverlo a una opción sin clic (Ajustes: si no se pudo guardar
+        # el modo del dólar, vuelve al de antes). No llama a al_cambiar.
+        estado.update(elegida=i, indice=i, encendida=False, pulsada=False)
+        pintar()
+        pista.update()
+
+    pista._elegir = elegir
     pintar()
     return pista
 

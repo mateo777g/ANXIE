@@ -2,17 +2,20 @@ import asyncio
 import functools
 import json
 import os
+import re
 
 import flet as ft
 from PIL import ImageFont
 
-from models import perfil
+from models import perfil, sesion
+from models.dolar_dao import DolarDAO
 from models.entorno import recurso
 from views import tema
 from views.barra_lateral import crear_barra_lateral
-from views.piezas import (fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
-                          tarjeta_iphone, boton_atajo_suelto, etiqueta, globo, aviso,
-                          interruptor, sin_auto_update)
+from views.login_view import mensaje_error
+from views.piezas import (MESES, fondo_pagina, fecha_vista, titulo_vista, cabecera_tarjeta,
+                          tarjeta_iphone, boton_atajo, boton_atajo_suelto, apagar_boton, campo,
+                          etiqueta, globo, aviso, interruptor, sin_auto_update)
 from views.tema import C
 
 ARCHIVO_CONFIG = "config.json"
@@ -38,6 +41,10 @@ TEMAS = [("Oscuro", ft.Icons.DARK_MODE_OUTLINED, "oscuro"),
 # El alto de la tarjeta del tema: su cabecera (75), la separación (10), el interruptor (48) y los
 # 7 que dejan las otras tarjetas bajo su botón, más el padding (25 + 25) y el borde (1 + 1).
 ALTO_TEMA = 75 + 10 + 48 + 7 + 50 + 2
+
+# Los modos del dólar (3/11), en el orden del interruptor: en vivo (lo trae la base de Frankfurter)
+# o manual (el número que pone el cliente). Ver models/dolar_dao.py.
+MODOS_DOLAR = [("En vivo", ft.Icons.SYNC), ("Manual", ft.Icons.EDIT_OUTLINED)]
 
 
 class AjustesView(ft.Container):
@@ -78,9 +85,10 @@ class AjustesView(ft.Container):
                 ft.Container(height=25),
                 ft.Row(tarjetas, height=250, spacing=10,
                        vertical_alignment=ft.CrossAxisAlignment.STRETCH),
-                # Debajo, de lado a lado (del ancho de las dos), el tema (la idea del dueño, 26/09).
-                ft.Row([self._crear_tarjeta_tema()], height=ALTO_TEMA,
-                       vertical_alignment=ft.CrossAxisAlignment.STRETCH),
+                # Debajo, el tema (la idea del dueño, 26/09) y el dólar (3/11), en las mismas dos
+                # columnas que las carpetas. Hasta el 3/11 el tema iba solo, de lado a lado.
+                ft.Row([self._crear_tarjeta_tema(), self._crear_tarjeta_dolar()], height=ALTO_TEMA,
+                       spacing=10, vertical_alignment=ft.CrossAxisAlignment.STRETCH),
             ], spacing=10)
         )
 
@@ -89,6 +97,7 @@ class AjustesView(ft.Container):
 
     def did_mount(self):
         self.page_ref = self.router.page
+        self.page_ref.run_task(self._cargar_dolar)
         # Al cambiar el ancho de la ventana, una ruta larga puede dejar de caber (o volver a
         # caber) en su tarjeta: su globo sale o se va. Sin auto-update: llega un evento por píxel
         # al arrastrar el borde, y _al_cambiar_tamano hace su update() solo si algo cambia.
@@ -166,6 +175,116 @@ class AjustesView(ft.Container):
             *cabecera_tarjeta("TEMA", "Los colores del panel: oscuro o claro."),
             ft.Container(expand=True, alignment=ft.Alignment.BOTTOM_LEFT, content=selector),
         ], spacing=10)))
+
+    # ------------------------------------------------------------------
+    # El dólar (3/11): de él sale el precio en USD de todas las cuentas
+    # ------------------------------------------------------------------
+    def _crear_tarjeta_dolar(self):
+        # Como la del tema: la cabecera y abajo un interruptor, En vivo / Manual. El subtítulo
+        # dice el dólar de ahora ("1 USD = 18.72 MXN · en vivo, del 2 de noviembre"). En Manual,
+        # al lado del interruptor, el campo con el número y un botón redondo para guardarlo
+        # (o Enter). Todo apagado hasta que llega el dólar de Supabase (_cargar_dolar).
+        self.dolar = None                    # la fila de Ajustes, cuando llega
+        self.guardando_dolar = False
+        cabecera = cabecera_tarjeta("DÓLAR", "Leyendo el dólar…")
+        self.subtitulo_dolar = cabecera[1]
+        self.selector_dolar = interruptor(MODOS_DOLAR, 0, self._al_cambiar_modo_dolar)
+        self.campo_dolar = campo(pista="18.50", tamano=13, expand=False,
+                                 al_enviar=sin_auto_update(lambda _: self._guardar_dolar_manual()))
+        self.campo_dolar.width = 86
+        self.boton_dolar = boton_atajo(ft.Icons.CHECK, None, lambda _: self._guardar_dolar_manual(),
+                                       ancho=48)
+        self.manual_dolar = ft.Row([self.campo_dolar, self.boton_dolar], spacing=10,
+                                   visible=False)
+        self._apagar_dolar(True)
+        return tarjeta_iphone(ft.Container(padding=ft.Padding(bottom=7), content=ft.Column([
+            *cabecera,
+            ft.Container(expand=True, alignment=ft.Alignment.BOTTOM_LEFT, content=ft.Row(
+                [self.selector_dolar, self.manual_dolar], spacing=10)),
+        ], spacing=10)))
+
+    def _apagar_dolar(self, apagado):
+        # Mientras lee o guarda: el interruptor, el campo y el botón al 40 % y sin eventos.
+        for control in (self.selector_dolar, self.campo_dolar):
+            control.disabled = apagado
+            control.opacity = 0.4 if apagado else 1
+        apagar_boton(self.boton_dolar, apagado)
+
+    def _pintar_dolar(self, fila):
+        # El subtítulo, el interruptor y el campo según la fila de Ajustes.
+        self.dolar = fila
+        en_vivo = bool(fila["dolar_en_vivo"])
+        self.subtitulo_dolar.value = _texto_dolar(fila)
+        self.selector_dolar._elegir(0 if en_vivo else 1)
+        self.manual_dolar.visible = not en_vivo
+        self.campo_dolar.value = _cifra_dolar(fila["dolar_mxn"])
+
+    async def _cargar_dolar(self):
+        try:
+            if not await asyncio.to_thread(sesion.comprobar):
+                self.subtitulo_dolar.value = "Entra con tu contraseña para ver el dólar."
+                self.subtitulo_dolar.update()
+                return
+            fila = await asyncio.to_thread(DolarDAO.obtener)
+        except Exception as e:
+            print(f"[ajustes] no se pudo leer el dólar: {type(e).__name__}: {e}")
+            fila = None
+        if not _montada(self.subtitulo_dolar):
+            return
+        if not fila:
+            self.subtitulo_dolar.value = "No se pudo leer el dólar. Revisa tu internet."
+            self.subtitulo_dolar.update()
+            return
+        self._pintar_dolar(fila)
+        self._apagar_dolar(False)
+        self.update()
+
+    def _al_cambiar_modo_dolar(self, i):
+        # En vivo: la base lo trae ya de Frankfurter. Manual: se queda el dólar de ahora, fijo,
+        # y sale el campo para cambiarlo.
+        if i == 0:
+            self.page_ref.run_task(self._guardar_dolar, None)
+        else:
+            self.page_ref.run_task(self._guardar_dolar, self.dolar["dolar_mxn"])
+
+    def _guardar_dolar_manual(self):
+        valor = _numero_dolar(self.campo_dolar.value)
+        if valor is None:
+            aviso(self.page_ref, "El dólar tiene que ser un número entre 5 y 60.")
+            return
+        self.page_ref.run_task(self._guardar_dolar, valor)
+
+    async def _guardar_dolar(self, valor):
+        # valor None = en vivo. Al guardarse, la base recalcula el USD de todas las cuentas y la
+        # página lo enseña sola (anxiestore.com guarda el catálogo 5 minutos en cada visitante).
+        if self.guardando_dolar or self.dolar is None:
+            return
+        self.guardando_dolar = True
+        antes = self.dolar
+        self.subtitulo_dolar.value = "Guardando el dólar…"
+        self._apagar_dolar(True)
+        self.update()
+        try:
+            if valor is None:
+                fila = await asyncio.to_thread(DolarDAO.poner_en_vivo)
+            else:
+                fila = await asyncio.to_thread(DolarDAO.poner_manual, valor)
+        except Exception as e:
+            print(f"[ajustes] no se pudo guardar el dólar: {type(e).__name__}: {e}")
+            fila = None
+            texto = mensaje_error(e, "No se guardó el dólar")
+        self.guardando_dolar = False
+        if not _montada(self.subtitulo_dolar):
+            return
+        self._pintar_dolar(fila or antes)
+        self._apagar_dolar(False)
+        self.update()
+        if fila is None:
+            aviso(self.page_ref, texto)
+        elif fila["dolar_en_vivo"]:
+            aviso(self.page_ref, "Dólar en vivo. Precios en USD al día.")
+        else:
+            aviso(self.page_ref, "Dólar guardado. Precios en USD al día.")
 
     def _poner_globo(self, texto):
         # La ruta entera en un globo, solo si no cabe en su tarjeta (sale cortada con "…"); si
@@ -250,3 +369,42 @@ class AjustesView(ft.Container):
 @functools.lru_cache(maxsize=1)
 def _fuente_ruta():
     return ImageFont.truetype(FUENTE_RUTA, TAM_RUTA)
+
+
+def _texto_dolar(fila):
+    # "1 USD = 18.72 MXN · en vivo, del 2 de noviembre" (el día de la tasa del Banco Central
+    # Europeo, que va en dolar_fuente) o "1 USD = 18.50 MXN · manual".
+    tasa = f"1 USD = {_cifra_dolar(fila['dolar_mxn'])} MXN"
+    if not fila["dolar_en_vivo"]:
+        return f"{tasa} · manual"
+    dia = re.search(r"(\d{4})-(\d{2})-(\d{2})", fila.get("dolar_fuente") or "")
+    if not dia:
+        return f"{tasa} · en vivo"
+    return f"{tasa} · en vivo, del {int(dia[3])} de {MESES[int(dia[2]) - 1].lower()}"
+
+
+def _cifra_dolar(valor):
+    # 18.7197 → "18.72"; 18.5 → "18.50" (como se escribe un tipo de cambio).
+    try:
+        return f"{float(valor):.2f}"
+    except (TypeError, ValueError):
+        return ""
+
+
+def _numero_dolar(texto):
+    # "18.5", "$18.50", "18,50" → 18.5; None si no es un dólar creíble (de 5 a 60 pesos, lo que
+    # deja también la base).
+    limpio = re.sub(r"[\s$]|MXN", "", (texto or "").replace(",", "."), flags=re.I)
+    try:
+        numero = float(limpio)
+    except ValueError:
+        return None
+    return round(numero, 4) if 5 <= numero <= 60 else None
+
+
+def _montada(control):
+    # ¿Sigue en pantalla? (se pudo salir de Ajustes mientras se esperaba a Supabase)
+    try:
+        return control.page is not None and control.parent is not None
+    except RuntimeError:
+        return False

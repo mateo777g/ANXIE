@@ -20,10 +20,11 @@ from views.recibomini_view import ReciboPequenoView
 class MainController:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.page.title = "Fragmentless - Panel"
+        self.page.title = "Anxie Store - Panel"
         # El logo en la barra de título y en la barra de tareas de Windows (Flet solo acepta .ico
-        # y con ruta absoluta). assets/icono.ico es fragmentless.png entero, cuadrado con las esquinas
-        # suaves (lo pidió el dueño); *.ico no va a git, así que sin él la ventana se queda con el de Flet.
+        # y con ruta absoluta). assets/icono.ico es logo-blanco.png entero (desde el 3/11; antes,
+        # fragmentless.png), cuadrado con las esquinas suaves al 18 % (lo pidió el dueño), de 16 a
+        # 256 px; *.ico no va a git, así que sin él la ventana se queda con el de Flet.
         icono = os.path.abspath(recurso("assets/icono.ico"))
         if os.path.exists(icono):
             self.page.window.icon = icono

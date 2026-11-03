@@ -39,10 +39,10 @@ SECCIONES_PIE = [
     ("Cerrar sesión", ft.Icons.LOGOUT, CERRAR),
 ]
 
-# El plan: lo enseñan el pie de la barra y la marca ("Plan Básico"). Escrito una sola vez para
-# que no puedan quedar distintos (regla 9). El nombre ya no va aquí: es el que eligió quien usa
-# el panel en su Perfil (models/perfil.py, "Miguel" mientras no elija otro).
-PLAN = "Básico"
+# Lo que dice la marca debajo de "ANXIE STORE" (hasta el 3/11, "Plan Básico", y también en el pie
+# de la barra; ahora solo en la marca, tal cual, sin "Plan"). El nombre del pie es el que eligió
+# quien usa el panel en su Perfil (models/perfil.py, "Miguel" mientras no elija otro).
+PLAN = "Panel del Dueño"
 
 ANCHO = 210           # la barra (250) menos su padding de 20 por lado
 ALTO = 44             # lo que medía cada opción: padding 12 + icono 20 + padding 12
@@ -129,18 +129,12 @@ def _pie_usuario(router):
             anillo_brillo(ft.Alignment(1, 1), radio, DIAMETRO_AVATAR),
         ], clip_behavior=ft.ClipBehavior.NONE)
     )
-    # Un nombre largo se corta con "…" y el plan no se mueve de su sitio.
+    # Solo el nombre (un nombre largo se corta con "…"). Hasta el 3/11 llevaba al lado
+    # "· Básico"; con PLAN = "Panel del Dueño" ya no cabía y se comía el nombre entero, y la
+    # marca de arriba ya lo dice.
     nombre = ft.Text(color=C.texto, size=14, font_family="LetraTitulo",
-                     max_lines=1, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS,
-                     expand=1, expand_loose=True)
-    fila = ft.Row([
-        avatar,
-        ft.Row([
-            nombre,
-            ft.Text("·", color=C.texto_suave, size=14, font_family="LetraTexto"),
-            ft.Text(PLAN, color=C.texto_suave, size=14, font_family="LetraTexto"),
-        ], spacing=6, expand=True),
-    ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+                     max_lines=1, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, expand=True)
+    fila = ft.Row([avatar, nombre], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER)
 
     def pintar_nombre():
         llamarte = perfil.como_llamarte()
@@ -187,10 +181,10 @@ def _pie_usuario(router):
 def marca(**kwargs):
     # El logo y la marca: arriba de la barra y en la pantalla de entrar (una pieza, regla 9).
     return ft.Row([
-        ft.CircleAvatar(radius=25, background_image_src=recurso("assets/fragmentless.png"), bgcolor=ft.Colors.WHITE),
+        ft.CircleAvatar(radius=25, background_image_src=recurso("assets/logo-blanco.png"), bgcolor=ft.Colors.WHITE),
         ft.Column([
-            ft.Text("FRAGMENTLESS", color=C.texto, size=18, font_family="LetraTitulo"),
-            ft.Text(f"Plan {PLAN}", color=C.texto, size=12, font_family="LetraTitulo")
+            ft.Text("ANXIE STORE", color=C.texto, size=18, font_family="LetraTitulo"),
+            ft.Text(PLAN, color=C.texto, size=12, font_family="LetraTitulo")
         ], spacing=0)
     ], **kwargs)
 

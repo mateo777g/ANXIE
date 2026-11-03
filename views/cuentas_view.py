@@ -8,6 +8,7 @@ import flet as ft
 
 from models import sesion
 from models.cuenta_dao import CuentaDAO, EscrituraSinEfecto
+from models.dolar_dao import DolarDAO, usd_de
 from models.r2_storage import R2Storage, ImagenNoValida, ErrorR2, comprobar_foto
 from models.supabase_client import FaltaConfiguracion
 from views.barra_lateral import crear_barra_lateral
@@ -73,6 +74,7 @@ class CuentasView(ft.Container):
         self.padding = 0
 
         self.cuentas = []          # tal como vienen de Supabase, las más nuevas primero
+        self.dolar = None          # pesos por dólar (Ajustes), para el USD del formulario
         self.filas = {}            # id de la cuenta → su fila en la tabla (para cambiar solo esa)
         self.rayas = {}            # id de la cuenta → la raya de encima de su fila
         self.hechas = 0            # cuántas de self.cuentas tienen ya su fila (llegan por tandas)
@@ -187,6 +189,13 @@ class CuentasView(ft.Container):
         self._poner_cuerpo([self._tarjeta_tabla([self._nota("Cargando cuentas…")], "Un momento…")])
         try:
             self.cuentas = await asyncio.to_thread(CuentaDAO.obtener_todas)
+            # El dólar, para enseñar el USD en el formulario mientras se escribe el precio (el
+            # de verdad lo pone la base al guardar). Si no llega, el formulario lo dice y ya.
+            try:
+                fila = await asyncio.to_thread(DolarDAO.obtener)
+                self.dolar = fila and fila["dolar_mxn"]
+            except Exception as e:
+                print(f"[cuentas] no se pudo leer el dólar: {e}")
         except Exception as e:
             print(f"[cuentas] no se pudieron traer: {e}")
             if _sin_permiso(e):
@@ -629,15 +638,24 @@ class CuentasView(ft.Container):
             "titulo": campo(pista="Ej: Cuenta Fortnite OG Travis Scott", valor=c.get("titulo") or "",
                             tamano=13),
             "preciomxn": campo(pista="Ej: 700", valor=_cifra(c.get("preciomxn")), tamano=13),
-            "preciousd": campo(pista="Ej: 41", valor=_cifra(c.get("preciousd")), tamano=13),
+            # El USD ya no se escribe (3/11): lo calcula la base con el dólar de Ajustes. Aquí solo
+            # se enseña, gris y sin poder escribir, y cambia mientras se escribe el precio en MXN.
+            "preciousd": campo(pista="Automático", valor=self._texto_usd(c.get("preciomxn")),
+                               solo_lectura=True, tamano=13),
             "vbucks": campo(pista="Ej: 1,500", valor=str(c.get("vbucks") or ""), tamano=13),
-            "disponibilidad": campo(pista="Ej: PC XBOX PLAY",
-                                    valor=c.get("disponibilidad") or "", tamano=13),
+            "disponibilidad": _SelectorPlataformas(c.get("disponibilidad")),
             "descripcion": campo(pista="Ej: 85 skins | OG STW | Travis Scott (cada cosa con |)",
                                  valor=c.get("descripcion") or "", tamano=13),
         }
         campos["descripcion"].multiline = True
         campos["descripcion"].min_lines = campos["descripcion"].max_lines = 3
+        campos["preciousd"].color = C.texto_suave
+        campos["preciousd"].can_request_focus = False
+
+        def al_escribir_mxn(_):
+            campos["preciousd"].value = self._texto_usd(_numero(campos["preciomxn"].value))
+            campos["preciousd"].update()
+        campos["preciomxn"].on_change = sin_auto_update(al_escribir_mxn)
 
         # La foto: la de la cuenta, o un hueco con su icono (Agregar). Al elegir una, sale ahí.
         imagen = ft.Image(src=c.get("image_url") or "", fit=ft.BoxFit.COVER, cache_width=1280,
@@ -655,11 +673,13 @@ class CuentasView(ft.Container):
                                                                   imagen, nota_foto))
         datos = ft.Column([
             ft.Row([_dato(ft.Icons.TITLE, "Título", campos["titulo"])]),
+            # V-Bucks sube junto a los precios (tres cifras cortas) para que las plataformas, cuatro
+            # botones, tengan su fila entera: en media fila "NINTENDO" no cabía.
             ft.Row([_dato(ft.Icons.SELL_OUTLINED, "Precio en MXN", campos["preciomxn"]),
-                    _dato(ft.Icons.ATTACH_MONEY, "Precio en USD", campos["preciousd"])], spacing=12),
-            ft.Row([_dato(ft.Icons.TOLL_OUTLINED, "V-Bucks", campos["vbucks"]),
-                    _dato(ft.Icons.SPORTS_ESPORTS_OUTLINED, "Plataformas", campos["disponibilidad"])],
-                   spacing=12),
+                    _dato(ft.Icons.ATTACH_MONEY, "Precio en USD", campos["preciousd"]),
+                    _dato(ft.Icons.TOLL_OUTLINED, "V-Bucks", campos["vbucks"])], spacing=12),
+            ft.Row([_dato(ft.Icons.SPORTS_ESPORTS_OUTLINED, "Plataformas",
+                          campos["disponibilidad"].control)]),
             ft.Row([_dato(ft.Icons.NOTES, "Descripción", campos["descripcion"])]),
         ], spacing=14, expand=1)
 
@@ -682,6 +702,11 @@ class CuentasView(ft.Container):
             ft.Row([guardar, cancelar], spacing=25),
         ], spacing=10, tight=True), expand=None)
         self.abrir_ventana(tarjeta)
+
+    def _texto_usd(self, mxn):
+        # "41" con el dólar de Ajustes; vacío (sale la pista, "Automático") sin precio o sin dólar.
+        usd = usd_de(mxn, self.dolar)
+        return "" if usd is None else str(usd)
 
     async def _elegir_foto(self, estado, foto, imagen, nota):
         # El selector de archivos de Windows (el de Flet: no bloquea la ventana, al contrario que
@@ -875,6 +900,58 @@ class _FilaAislada(ft.Container):
         return "FilaAislada"
 
 
+class _SelectorPlataformas:
+    # Las plataformas del formulario: un botón por cada una de la página (PC, XBOX, PLAY,
+    # NINTENDO), con su puntito (lleno la elegida, hueco la que no, como el de VISIBLE / OCULTA),
+    # que se encienden y apagan con un clic. Antes era un campo donde el cliente escribía las
+    # palabras; ahora no escribe nada. `value` es lo que se guarda en "disponibilidad": las
+    # elegidas en el orden de la página, separadas por espacio ("PC XBOX PLAY"), que es lo que
+    # buscan las expresiones de PLATAFORMAS (y las de la página). Al editar salen marcadas las
+    # que ya nombraba el texto.
+    def __init__(self, disponibilidad):
+        texto = (disponibilidad or "").strip()
+        self.elegidas = {nombre for regex, nombre in PLATAFORMAS if regex.search(texto)}
+        self.control = ft.Row([self._boton(nombre) for _, nombre in PLATAFORMAS],
+                              spacing=8, expand=True)
+
+    @property
+    def value(self):
+        return " ".join(nombre for _, nombre in PLATAFORMAS if nombre in self.elegidas)
+
+    def _boton(self, nombre):
+        # El pozo de un campo (48 de alto, radio 10, borde de raya), para que la fila se lea como
+        # un dato del formulario. Elegida: borde, texto y punto en blanco. Con el cursor encima,
+        # la cara encendida de un atajo.
+        punto = ft.Container(width=8, height=8, border_radius=4)
+        texto = ft.Text(nombre, size=13, font_family="LetraTexto", no_wrap=True)
+        boton = ft.Container(
+            height=48, expand=1, border_radius=10, bgcolor=C.pozo,
+            alignment=ft.Alignment.CENTER,
+            content=ft.Row([punto, texto], spacing=8, tight=True,
+                           vertical_alignment=ft.CrossAxisAlignment.CENTER))
+
+        def pintar():
+            elegida = nombre in self.elegidas
+            punto.bgcolor = C.texto if elegida else None
+            punto.border = None if elegida else ft.Border.all(1, C.texto_suave)
+            texto.color = C.texto if elegida else C.texto_suave
+            boton.border = ft.Border.all(1, C.texto_suave if elegida else C.linea)
+
+        def al_pasar(e):
+            boton.bgcolor = C.cara_encendida if e.data in (True, "true") else C.pozo
+            boton.update()
+
+        def al_pulsar(_):
+            self.elegidas ^= {nombre}
+            pintar()
+            boton.update()
+
+        boton.on_hover = sin_auto_update(al_pasar)
+        boton.on_click = sin_auto_update(al_pulsar)
+        pintar()
+        return boton
+
+
 def _dato(icono, texto, valor):
     # Un dato de la ventana de los tres puntos: su etiqueta encima (icono y texto en WHITE54,
     # como "Carpeta actual" en Ajustes) y el valor debajo, a 6.
@@ -1007,9 +1084,11 @@ def _numero(texto):
 
 
 # Los campos del formulario, en el orden de la ventana, con el aviso de cuando faltan.
+# El precio en USD no está: lo pone la base (models/dolar_dao.py).
 FALTAS = [("titulo", "Falta el título."), ("preciomxn", "Falta el precio en MXN."),
-          ("preciousd", "Falta el precio en USD."), ("vbucks", "Faltan los V-Bucks."),
-          ("disponibilidad", "Faltan las plataformas."), ("descripcion", "Falta la descripción.")]
+          ("vbucks", "Faltan los V-Bucks."),
+          ("disponibilidad", "Elige al menos una plataforma."),
+          ("descripcion", "Falta la descripción.")]
 
 
 def _leer_formulario(campos):
@@ -1019,11 +1098,10 @@ def _leer_formulario(campos):
     for clave, texto in FALTAS:
         if not datos[clave]:
             return datos, texto
-    for clave, moneda in (("preciomxn", "MXN"), ("preciousd", "USD")):
-        numero = _numero(datos[clave])
-        if numero is None:
-            return datos, f"El precio en {moneda} tiene que ser un número."
-        datos[clave] = numero
+    numero = _numero(datos["preciomxn"])
+    if numero is None:
+        return datos, "El precio en MXN tiene que ser un número."
+    datos["preciomxn"] = numero
     return datos, None
 
 
